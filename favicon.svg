@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <defs>
+    <!-- Purple→blue diagonal (replicates rgba(139,107,255,0.22)→rgba(88,166,255,0.12) over dark) -->
+    <linearGradient id="bg" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2D2562"/>
+      <stop offset="55%" stop-color="#222955"/>
+      <stop offset="100%" stop-color="#1B2E55"/>
+    </linearGradient>
+    <!-- Top-left brand purple wash for depth -->
+    <radialGradient id="shine" cx="0" cy="0" r="1" gradientUnits="objectBoundingBox">
+      <stop offset="0%" stop-color="#8b6bff" stop-opacity="0.32"/>
+      <stop offset="60%" stop-color="#8b6bff" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Main sparkle: white with subtle lilac tint (matches #f7f2ff stroke color) -->
+    <linearGradient id="spark-fill" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="50%" stop-color="#F7F2FF"/>
+      <stop offset="100%" stop-color="#D4C7FF"/>
+    </linearGradient>
+    <!-- Mini sparkles in brand purple #8b6bff -->
+    <linearGradient id="mini-fill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#A98EFF"/>
+      <stop offset="100%" stop-color="#8b6bff"/>
+    </linearGradient>
+    <!-- Halo behind main spark: brand purple glow -->
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#8b6bff" stop-opacity="0.45"/>
+      <stop offset="55%" stop-color="#8b6bff" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#8b6bff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="32" height="32" rx="8" fill="url(#bg)"/>
+  <rect width="32" height="32" rx="8" fill="url(#shine)"/>
+  <circle cx="16.0" cy="16.0" r="11" fill="url(#glow)"/>
+  <path d="M16.00 6.00Q17.10 14.90 26.00 16.00Q17.10 17.10 16.00 26.00Q14.90 17.10 6.00 16.00Q14.90 14.90 16.00 6.00Z" fill="url(#spark-fill)"/>
+  <path d="M23.00 7.25Q23.25 9.25 25.25 9.50Q23.25 9.75 23.00 11.75Q22.75 9.75 20.75 9.50Q22.75 9.25 23.00 7.25Z" fill="url(#mini-fill)"/>
+  <path d="M9.50 21.50Q9.66 22.84 11.00 23.00Q9.66 23.16 9.50 24.50Q9.34 23.16 8.00 23.00Q9.34 22.84 9.50 21.50Z" fill="url(#mini-fill)" opacity="0.75"/>
+</svg>
