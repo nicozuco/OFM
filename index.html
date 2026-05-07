@@ -8772,6 +8772,9 @@
           flushIfPending("poll");
           pullIfIdle("poll");
         }, REMOTE_SYNC_POLL_MS);
+
+        /* Fase 1: arranca también el canal de operaciones (tasks ya migradas). */
+        startOpsSync().catch((err) => console.error("[Ops] startOpsSync falló:", err));
       }
 
       async function stopRemoteSync(options = {}) {
@@ -8788,6 +8791,13 @@
         if (channel && supabaseClient) {
           try { await supabaseClient.removeChannel(channel); }
           catch (error) { console.error("[Sync][REALTIME] error cerrando canal:", error); }
+        }
+        /* Solo cerrar ops cuando realmente terminamos la sesión.
+           startRemoteSync llama a stopRemoteSync con keepListeners=true en cada
+           reintento del canal legacy; no queremos que esos reintentos derriben
+           el canal de ops (independiente y estable). */
+        if (!options.keepListeners) {
+          await stopOpsSync();
         }
       }
 
@@ -8812,6 +8822,276 @@
 
         return saveRemoteData({ force: true });
       }
+
+      /* =====================================================================
+       * OPERATIONS SYNC v2 — Fase 0 (dormido por defecto).
+       * Cada cambio de un usuario se publica como una "op" (entity.upsert /
+       * entity.delete / field.set) en la tabla app_operations. Otros clientes
+       * la reciben por Realtime y la aplican a su DATA local. No coexiste con
+       * conflictos del documento entero porque cada op es atómica y dirigida.
+       *
+       * Este bloque está SIN ENGANCHAR a las acciones de la UI. Para activarlo
+       * en una sesión de prueba ejecutar en consola:
+       *     await window.startOpsSync();
+       * Y disparar manualmente, por ejemplo:
+       *     await window.dispatchOp({
+       *       op_type: "field.set",
+       *       entity_kind: "leads",
+       *       entity_id: "lead-123",
+       *       field_path: "name",
+       *       value: "Pedro"
+       *     });
+       * En la Fase 1 se reemplazarán las llamadas a queueSave() por dispatchOp().
+       * ===================================================================== */
+      const OPS_TABLE = "app_operations";
+      const OPS_REALTIME_CHANNEL = "ofm-app-operations";
+      const opsAppliedClientIds = new Set();
+      const OPS_APPLIED_CLIENT_IDS_MAX = 5000;
+      let opsRealtimeChannel = null;
+
+      /* Conjunto de entity-keys (singular, como en el entity registry) cuyas
+         mutaciones ya viajan por dispatchOp. saveEntityForm y deleteEntityItem
+         saltan queueSave() para estas entidades para no reescribir el snapshot
+         legacy en cada cambio. */
+      const ENTITIES_ON_OPS = new Set([
+        "task", "sop", "lead", "creator",
+        "chatChannel", "chatAgent", "chatTraining", "chatMonitoring", "chatApproval",
+        "contentDoc", "contentStyle", "contentVehicle", "deliveryFlow",
+        "fanProfile", "fanFlow", "gfStage", "shift",
+        "contract", "eosReport", "hiringCandidate", "processMap",
+        "governanceEntry", "payment", "accountInfrastructure"
+      ]);
+
+      function generateOpClientId() {
+        if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+        return "op-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
+      }
+
+      function rememberAppliedOpId(clientOpId) {
+        if (!clientOpId) return;
+        opsAppliedClientIds.add(clientOpId);
+        if (opsAppliedClientIds.size > OPS_APPLIED_CLIENT_IDS_MAX) {
+          const drop = opsAppliedClientIds.size - OPS_APPLIED_CLIENT_IDS_MAX;
+          let i = 0;
+          for (const id of opsAppliedClientIds) {
+            if (i >= drop) break;
+            opsAppliedClientIds.delete(id);
+            i += 1;
+          }
+        }
+      }
+
+      function setValueByPath(target, path, value) {
+        if (!target || typeof target !== "object") return false;
+        const parts = String(path || "").split(".").filter(Boolean);
+        if (!parts.length) return false;
+        let cur = target;
+        for (let i = 0; i < parts.length - 1; i += 1) {
+          const key = parts[i];
+          if (cur[key] == null || typeof cur[key] !== "object") {
+            cur[key] = {};
+          }
+          cur = cur[key];
+        }
+        cur[parts[parts.length - 1]] = value;
+        return true;
+      }
+
+      function applyOpToData(data, op) {
+        if (!data || !op) return false;
+        const collection = data[op.entity_kind];
+        if (!Array.isArray(collection)) {
+          console.warn("[Ops] entity_kind sin colección array:", op.entity_kind);
+          return false;
+        }
+        const targetId = String(op.entity_id);
+        switch (op.op_type) {
+          case "entity.upsert": {
+            const idx = collection.findIndex((e) => String(e?.id) === targetId);
+            const incoming = op.value && typeof op.value === "object" ? op.value : {};
+            if (idx >= 0) {
+              Object.assign(collection[idx], incoming);
+            } else {
+              collection.push({ id: targetId, ...incoming });
+            }
+            return true;
+          }
+          case "entity.delete": {
+            const idx = collection.findIndex((e) => String(e?.id) === targetId);
+            if (idx >= 0) collection.splice(idx, 1);
+            return true;
+          }
+          case "field.set": {
+            const entity = collection.find((e) => String(e?.id) === targetId);
+            if (!entity) {
+              console.warn("[Ops] field.set sobre entidad inexistente:", op.entity_kind, targetId);
+              return false;
+            }
+            return setValueByPath(entity, op.field_path, op.value);
+          }
+          default:
+            console.warn("[Ops] op_type desconocido:", op.op_type);
+            return false;
+        }
+      }
+
+      async function dispatchOp(op = {}) {
+        if (!supabaseClient) {
+          console.warn("[Ops] supabaseClient no disponible.");
+          return false;
+        }
+        if (!authUser) {
+          console.warn("[Ops] sin authUser; no se publica op.");
+          return false;
+        }
+        if (!op.op_type || !op.entity_kind || !op.entity_id) {
+          console.warn("[Ops] dispatchOp requiere op_type, entity_kind y entity_id.", op);
+          return false;
+        }
+
+        const record = {
+          client_op_id: op.client_op_id || generateOpClientId(),
+          user_email: authUser?.email || null,
+          op_type: op.op_type,
+          entity_kind: op.entity_kind,
+          entity_id: String(op.entity_id),
+          field_path: op.field_path || null,
+          value: op.value === undefined ? null : op.value
+        };
+
+        rememberAppliedOpId(record.client_op_id);
+        const appliedLocally = applyOpToData(DATA, record);
+        if (appliedLocally) {
+          persistData();
+          if (typeof render === "function") render();
+        }
+
+        /* Anti-parpadeo: solo mostramos "Sincronizando" si el insert tarda más
+           de 300 ms. La inmensa mayoría de ops va por debajo y el indicador
+           se queda estable en "Sincronizado". */
+        let syncingTimer = window.setTimeout(() => setSyncStatus("syncing"), 300);
+        try {
+          const { error } = await supabaseClient.from(OPS_TABLE).insert(record);
+          window.clearTimeout(syncingTimer);
+          if (error) {
+            console.error("[Ops] insert falló:", error, record);
+            setSyncStatus("error");
+            return false;
+          }
+          setSyncStatus("synced");
+          return true;
+        } catch (err) {
+          window.clearTimeout(syncingTimer);
+          console.error("[Ops] excepción al insertar:", err, record);
+          setSyncStatus("error");
+          return false;
+        }
+      }
+
+      let opsIncomingRenderTimer = null;
+      let opsIncomingRenderPending = false;
+      const OPS_INCOMING_RENDER_DEBOUNCE_MS = 200;
+
+      function isUserBusyEditingForOps() {
+        if (state.activeForm
+            || state.activeCreatorId
+            || state.activeChatChannelId
+            || state.activeCallLeadId
+            || state.activeSopId) {
+          return true;
+        }
+        const el = document.activeElement;
+        if (!el) return false;
+        const tag = el.tagName?.toLowerCase();
+        return tag === "input" || tag === "textarea" || tag === "select" || el.isContentEditable;
+      }
+
+      function scheduleIncomingOpsRender() {
+        if (opsIncomingRenderTimer) window.clearTimeout(opsIncomingRenderTimer);
+        opsIncomingRenderTimer = window.setTimeout(() => {
+          opsIncomingRenderTimer = null;
+          if (isUserBusyEditingForOps()) {
+            /* No interrumpimos al usuario tipeando o con un modal abierto.
+               Marcamos pendiente; el flush ocurre al perder foco / cerrar modal. */
+            opsIncomingRenderPending = true;
+            return;
+          }
+          opsIncomingRenderPending = false;
+          if (typeof render === "function") render();
+        }, OPS_INCOMING_RENDER_DEBOUNCE_MS);
+      }
+
+      function flushPendingIncomingOpsRender() {
+        if (!opsIncomingRenderPending) return;
+        if (isUserBusyEditingForOps()) return;
+        opsIncomingRenderPending = false;
+        if (typeof render === "function") render();
+      }
+
+      document.addEventListener("focusout", () => {
+        if (!opsIncomingRenderPending) return;
+        /* Esperamos a que el nuevo foco se asiente para no rebotar entre inputs. */
+        window.setTimeout(flushPendingIncomingOpsRender, 0);
+      }, true);
+
+      async function startOpsSync() {
+        if (!supabaseClient) {
+          console.warn("[Ops] supabaseClient no disponible; startOpsSync abortado.");
+          return false;
+        }
+        if (!authUser) {
+          console.warn("[Ops] sin authUser; startOpsSync abortado.");
+          return false;
+        }
+        if (opsRealtimeChannel) return true;
+
+        try {
+          const channel = supabaseClient
+            .channel(OPS_REALTIME_CHANNEL)
+            .on(
+              "postgres_changes",
+              { event: "INSERT", schema: "public", table: OPS_TABLE },
+              (payload) => {
+                const op = payload?.new;
+                if (!op || !op.client_op_id) return;
+                if (opsAppliedClientIds.has(op.client_op_id)) return;
+                rememberAppliedOpId(op.client_op_id);
+                const applied = applyOpToData(DATA, op);
+                if (applied) {
+                  persistData();
+                  scheduleIncomingOpsRender();
+                }
+              }
+            );
+
+          opsRealtimeChannel = channel;
+          channel.subscribe((status) => {
+            if (status === "SUBSCRIBED") {
+              console.info("[Ops][Realtime] suscrito a", OPS_TABLE);
+            } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+              console.warn("[Ops][Realtime] estado:", status);
+            }
+          });
+          return true;
+        } catch (err) {
+          console.error("[Ops][Realtime] no se pudo abrir canal:", err);
+          opsRealtimeChannel = null;
+          return false;
+        }
+      }
+
+      async function stopOpsSync() {
+        const channel = opsRealtimeChannel;
+        opsRealtimeChannel = null;
+        if (channel && supabaseClient) {
+          try { await supabaseClient.removeChannel(channel); }
+          catch (err) { console.error("[Ops][Realtime] error cerrando canal:", err); }
+        }
+      }
+
+      window.dispatchOp = dispatchOp;
+      window.startOpsSync = startOpsSync;
+      window.stopOpsSync = stopOpsSync;
 
       function formatDateLabel() {
         return new Intl.DateTimeFormat("es-ES", {
@@ -9632,10 +9912,15 @@
         return getLeadQualityFlags(lead).length;
       }
 
-      function renderLeadNichePreview(nicheValue = "") {
+      function renderLeadNichePreview(nicheValue = "", options = {}) {
         const nicheMeta = getLeadNicheMeta(nicheValue);
         const tierKey = nicheMeta?.tier || "unknown";
         const tierMeta = getLeadTierMeta(tierKey);
+        const compact = Boolean(options.compact);
+
+        if (compact && !nicheMeta) {
+          return `<p class="helper-text">Selecciona un nicho para cargar tier y guion.</p>`;
+        }
 
         return `
           <div class="lead-tier-preview">
@@ -9646,11 +9931,13 @@
               </div>
               ${badge(getLeadTierDisplay(tierKey), toneForLeadTier(tierKey))}
             </div>
+            ${compact ? "" : `
             <div class="lead-tier-meta">
               <span><b>Recursos</b>${escapeHtml(tierMeta.resources)}</span>
               <span><b>Produccion</b>${escapeHtml(tierMeta.production)}</span>
               <span><b>Decision</b>${escapeHtml(tierMeta.start)}</span>
             </div>
+            `}
           </div>
         `;
       }
@@ -10378,6 +10665,16 @@
         return PROFILE_RETENTION_LABELS[value] || "Sin definir";
       }
 
+      function publishCreatorChange(creator) {
+        if (!creator) return;
+        dispatchOp({
+          op_type: "entity.upsert",
+          entity_kind: "creators",
+          entity_id: creator.id,
+          value: creator
+        });
+      }
+
       function markProfileTaskStatus(creatorId, taskId, done) {
         const creator = getCreatorById(creatorId);
         if (!creator) return;
@@ -10392,7 +10689,7 @@
         });
 
         touchCreator(creator);
-        queueSave();
+        publishCreatorChange(creator);
       }
 
       function addProfileTask(creatorId, payload) {
@@ -10422,7 +10719,7 @@
         );
 
         touchCreator(creator);
-        queueSave();
+        publishCreatorChange(creator);
       }
 
       function addProfileNote(creatorId, payload) {
@@ -10437,7 +10734,7 @@
         });
 
         touchCreator(creator);
-        queueSave();
+        publishCreatorChange(creator);
       }
 
       function updateProfileBlock(creatorId, block, values) {
@@ -10450,7 +10747,7 @@
         };
 
         touchCreator(creator);
-        queueSave();
+        publishCreatorChange(creator);
       }
 
       function getProfileTaskAreaDefault() {
@@ -11678,7 +11975,7 @@
             nicheScalability: item?.nicheScalability || "",
             qualityFlags: getLeadQualityFlags(item),
             country: item?.country || "",
-            status: item?.status || "new",
+            status: item?.status || (state.activeForm.mode === "new" ? "contacted" : "new"),
             revenue: item?.revenue ?? "",
             source: item?.source || "",
             updated: item?.updated || "",
@@ -12053,32 +12350,37 @@
         return null;
       }
 
-      function renderLeadNicheSection(draft = {}) {
+      function renderLeadNicheSection(draft = {}, options = {}) {
         const nicheTier = getLeadNicheTierKey(draft.niche);
         const selectedQualityFlags = new Set(normalizeTextList(draft.qualityFlags));
+        const compact = Boolean(options.compact);
+        const tier = getLeadTierMeta(nicheTier);
 
         return `
           <div class="lead-form-section">
             <div class="lead-form-section-head">
               <div>
                 <h4>Nicho y tier</h4>
-                <p>Clasifica el lead por complejidad operativa, recursos y fit real antes de cerrar.</p>
+                <p>${compact ? "Clasificacion rapida desde el perfil antes del primer contacto." : "Clasifica complejidad operativa, recursos y fit real antes de cerrar."}</p>
               </div>
-              ${badge(getLeadTierDisplay(nicheTier), toneForLeadTier(nicheTier))}
+              <span class="badge tone-${escapeHtml(tier.tone || "default")}" data-lead-tier-badge>${escapeHtml(getLeadTierDisplay(nicheTier))}</span>
             </div>
             <input type="hidden" name="nicheTier" value="${escapeHtml(nicheTier)}" data-lead-niche-tier-input />
             <div class="lead-form-grid">
               ${renderSelectField("Nicho", "niche", draft.niche, getLeadNicheSelectOptions(draft.niche), { full: true })}
-              <div class="field full" data-lead-niche-preview>
-                ${renderLeadNichePreview(draft.niche)}
+              <div class="field full" data-lead-niche-preview data-compact="${compact ? "true" : "false"}">
+                ${renderLeadNichePreview(draft.niche, { compact })}
               </div>
+              ${compact ? "" : `
               ${renderSelectField("Fit global", "nicheFit", draft.nicheFit, Object.entries(LEAD_FIT_LABELS))}
               ${renderSelectField("Recursos", "nicheResources", draft.nicheResources, Object.entries(LEAD_SELECTION_SCORE_LABELS))}
               ${renderSelectField("Energia/persona", "nicheEnergy", draft.nicheEnergy, Object.entries(LEAD_SELECTION_SCORE_LABELS))}
               ${renderSelectField("Look / market fit", "nicheLookFit", draft.nicheLookFit, Object.entries(LEAD_SELECTION_SCORE_LABELS))}
               ${renderSelectField("Escalabilidad", "nicheScalability", draft.nicheScalability, Object.entries(LEAD_SELECTION_SCORE_LABELS))}
+              `}
             </div>
           </div>
+          ${compact ? "" : `
           <div class="lead-form-section">
             <div class="lead-form-section-head">
               <div>
@@ -12087,6 +12389,7 @@
               </div>
               ${badge(`${selectedQualityFlags.size}/5`, selectedQualityFlags.size >= 4 ? "success" : selectedQualityFlags.size >= 2 ? "warning" : "default")}
             </div>
+            <input type="hidden" name="qualityFlagsPresent" value="1" />
             <div class="lead-quality-grid" data-lead-quality-grid>
               ${Object.entries(LEAD_QUALITY_LABELS).map(([value, [label, description]]) => `
                 <label class="lead-quality-option">
@@ -12097,6 +12400,7 @@
               `).join("")}
             </div>
           </div>
+          `}
         `;
       }
 
@@ -12129,8 +12433,15 @@
         const tierInput = form.querySelector("[data-lead-niche-tier-input]");
         if (tierInput) tierInput.value = tierKey;
 
+        const tierBadge = form.querySelector("[data-lead-tier-badge]");
+        if (tierBadge) {
+          tierBadge.textContent = getLeadTierDisplay(tierKey);
+          tierBadge.className = `badge tone-${toneForLeadTier(tierKey)}`;
+          tierBadge.dataset.leadTierBadge = "";
+        }
+
         const preview = form.querySelector("[data-lead-niche-preview]");
-        if (preview) preview.innerHTML = renderLeadNichePreview(nicheSelect.value);
+        if (preview) preview.innerHTML = renderLeadNichePreview(nicheSelect.value, { compact: preview.dataset.compact === "true" });
 
         const script = getLeadDmScriptForNiche(nicheSelect.value);
         const scriptField = form.querySelector("[data-lead-dm-script]");
@@ -12159,28 +12470,72 @@
         }
       }
 
+      function getLeadFormStage(status = "new", mode = "") {
+        if (mode === "new") return "dm";
+        if (["new", "contacted", "followup"].includes(status)) return "dm";
+        if (status === "replied") return "reply";
+        if (["call1", "call2"].includes(status)) return "call";
+        return "closing";
+      }
+
+      function renderLeadStageFields(draft = {}, stage = "dm") {
+        if (stage === "dm") {
+          return `
+            ${renderLeadNicheSection(draft, { compact: true })}
+            ${renderLeadDmScriptField(draft)}
+          `;
+        }
+
+        if (stage === "reply") {
+          return `
+            ${renderInputField("Ingresos estimados", "revenue", String(draft.revenue ?? ""), { type: "number", min: 0, step: 100 })}
+            ${renderSelectField("Capacidad de mejora", "coachability", draft.coachability, getLeadCoachabilitySelectOptions(draft.coachability))}
+            ${renderLeadNicheSection(draft)}
+            ${renderLeadDmScriptField(draft)}
+            ${renderTextareaField("Objeciones", "objections", draft.objections, { full: true })}
+            ${renderTextareaField("Notas de voz", "voiceNotes", draft.voiceNotes, { full: true })}
+          `;
+        }
+
+        if (stage === "call") {
+          return `
+            ${renderInputField("Ingresos estimados", "revenue", String(draft.revenue ?? ""), { type: "number", min: 0, step: 100 })}
+            ${renderSelectField("Capacidad de mejora", "coachability", draft.coachability, getLeadCoachabilitySelectOptions(draft.coachability))}
+            ${renderLeadNicheSection(draft)}
+            ${renderTextareaField("Objeciones", "objections", draft.objections, { full: true })}
+            ${renderTextareaField("Framework de llamada", "callFramework", draft.callFramework, { full: true })}
+            ${renderTextareaField("Call 1", "call1Notes", draft.call1Notes, { full: true })}
+            ${renderTextareaField("Call 2", "call2Notes", draft.call2Notes, { full: true })}
+            ${renderTextareaField("Notas de voz", "voiceNotes", draft.voiceNotes, { full: true })}
+          `;
+        }
+
+        return `
+          ${renderInputField("Ingresos estimados", "revenue", String(draft.revenue ?? ""), { type: "number", min: 0, step: 100 })}
+          ${renderSelectField("Capacidad de mejora", "coachability", draft.coachability, getLeadCoachabilitySelectOptions(draft.coachability))}
+          ${renderLeadNicheSection(draft)}
+          ${renderTextareaField("Objeciones", "objections", draft.objections, { full: true })}
+          ${renderTextareaField("Decision pre-firma", "preSignDecision", draft.preSignDecision, { full: true })}
+          ${renderInputField("Ultima actualizacion", "updated", draft.updated, { type: "datetime-local", placeholder: "Se rellena automaticamente si lo dejas vacio", full: true })}
+        `;
+      }
+
       function renderActiveFormFields(draft) {
         if (!state.activeForm) return "";
 
         if (state.activeForm.entity === "lead") {
+          const status = draft.status || (state.activeForm.mode === "new" ? "contacted" : "new");
+          const stage = getLeadFormStage(status, state.activeForm.mode);
           return `
             ${renderInputField("Lead", "name", draft.name, { required: true })}
             ${renderInputField("Usuario / handle", "handle", draft.handle)}
             ${renderInputField("Pais", "country", draft.country)}
             ${renderSelectField("Fuente", "source", draft.source, getLeadSourceSelectOptions(draft.source))}
-            ${renderSelectField("Estado", "status", draft.status, Object.entries(LEAD_STATUS_LABELS))}
-            ${renderInputField("Ingresos estimados", "revenue", String(draft.revenue ?? ""), { type: "number", min: 0, step: 100 })}
-            ${renderSelectField("Capacidad de mejora", "coachability", draft.coachability, getLeadCoachabilitySelectOptions(draft.coachability))}
+            ${state.activeForm.mode === "new"
+              ? `<input type="hidden" name="status" value="${escapeHtml(status)}" />`
+              : renderSelectField("Estado", "status", status, Object.entries(LEAD_STATUS_LABELS))}
             ${renderSelectField("Responsable", "owner", draft.owner, getUserSelectOptions({ currentValue: draft.owner }), { full: true })}
-            ${renderLeadNicheSection(draft)}
-            ${renderLeadDmScriptField(draft)}
-            ${renderTextareaField("Objeciones", "objections", draft.objections, { full: true })}
-            ${renderTextareaField("Framework de llamada", "callFramework", draft.callFramework, { full: true })}
-            ${renderTextareaField("Call 1", "call1Notes", draft.call1Notes, { full: true })}
-            ${renderTextareaField("Call 2", "call2Notes", draft.call2Notes, { full: true })}
-            ${renderTextareaField("Decision pre-firma", "preSignDecision", draft.preSignDecision, { full: true })}
-            ${renderTextareaField("Notas de voz", "voiceNotes", draft.voiceNotes, { full: true })}
-            ${renderInputField("Ultima actualizacion", "updated", draft.updated, { type: "datetime-local", placeholder: "Se rellena automaticamente si lo dejas vacio", full: true })}
+            ${renderLeadStageFields(draft, stage)}
           `;
         }
 
@@ -12567,7 +12922,7 @@
 
         const titles = {
           profile: state.activeForm.mode === "edit" ? "Editar cabecera" : "Nueva cabecera",
-          lead: state.activeForm.mode === "edit" ? "Editar lead" : "Nuevo lead",
+          lead: state.activeForm.mode === "edit" ? "Editar lead" : state.activeForm.mode === "new" ? "Nuevo DM" : "Nuevo lead",
           creator: state.activeForm.mode === "edit" ? "Editar creadora" : "Nueva creadora",
           task: state.activeForm.mode === "edit" ? "Editar tarea" : "Nueva tarea",
           appUser: state.activeForm.mode === "edit" ? "Editar usuario" : "Nuevo usuario",
@@ -12599,7 +12954,7 @@
 
         const descriptions = {
           profile: "Actualiza el nombre de la agencia y el usuario visible en el panel.",
-          lead: "Guarda leads reales para trabajar el embudo comercial.",
+          lead: state.activeForm.mode === "new" ? "Registra el DM inicial con solo los datos visibles desde el perfil." : "Guarda leads reales para trabajar el embudo comercial.",
           creator: "Mantén tus creadoras editables y limpias desde el propio panel.",
           task: "Crea y edita tareas operativas con prioridad, responsable y estado.",
           appUser: "Asigna rol, estado y visibilidad por creadora dentro de la app.",
@@ -12633,7 +12988,7 @@
         const modalTitle = titles[state.activeForm.entity] || (schema
           ? getSchemaTitle(state.activeForm.entity, state.activeForm.mode)
           : "Formulario");
-        const modalDescription = schema?.description || descriptions[state.activeForm.entity] || "";
+        const modalDescription = descriptions[state.activeForm.entity] || schema?.description || "";
 
         return `
           <div class="modal-backdrop" data-action="close-modal">
@@ -14059,39 +14414,50 @@
 
       function saveLeadForm(formData, id) {
         const existing = getEntityItem("lead", id);
-        const niche = String(formData.get("niche") || "").trim();
+        const getText = (name, fallback = "") => formData.has(name)
+          ? String(formData.get(name) || "").trim()
+          : String(existing?.[name] || fallback || "").trim();
+        const niche = getText("niche");
         const nicheTier = String(formData.get("nicheTier") || "").trim() || getLeadNicheTierKey(niche);
+        const qualityFlags = formData.has("qualityFlagsPresent")
+          ? formData.getAll("qualityFlags")
+          : normalizeTextList(existing?.qualityFlags);
         const item = normalizeLead({
           id: id || createId("lead"),
-          name: String(formData.get("name") || "").trim(),
-          handle: String(formData.get("handle") || "").trim(),
+          name: getText("name"),
+          handle: getText("handle"),
           niche,
           nicheTier,
-          nicheFit: String(formData.get("nicheFit") || "").trim(),
-          nicheResources: String(formData.get("nicheResources") || "").trim(),
-          nicheEnergy: String(formData.get("nicheEnergy") || "").trim(),
-          nicheLookFit: String(formData.get("nicheLookFit") || "").trim(),
-          nicheScalability: String(formData.get("nicheScalability") || "").trim(),
-          qualityFlags: formData.getAll("qualityFlags"),
-          country: String(formData.get("country") || "").trim(),
-          status: String(formData.get("status") || "new"),
-          revenue: Number(formData.get("revenue") || 0),
-          source: String(formData.get("source") || "").trim(),
-          owner: String(formData.get("owner") || "").trim(),
-          dmScript: String(formData.get("dmScript") || "").trim(),
-          objections: String(formData.get("objections") || "").trim(),
-          callFramework: String(formData.get("callFramework") || "").trim(),
-          call1Notes: String(formData.get("call1Notes") || "").trim(),
-          call2Notes: String(formData.get("call2Notes") || "").trim(),
-          coachability: String(formData.get("coachability") || "").trim(),
-          preSignDecision: String(formData.get("preSignDecision") || "").trim(),
-          voiceNotes: String(formData.get("voiceNotes") || "").trim(),
+          nicheFit: getText("nicheFit"),
+          nicheResources: getText("nicheResources"),
+          nicheEnergy: getText("nicheEnergy"),
+          nicheLookFit: getText("nicheLookFit"),
+          nicheScalability: getText("nicheScalability"),
+          qualityFlags,
+          country: getText("country"),
+          status: getText("status", "new"),
+          revenue: formData.has("revenue") ? Number(formData.get("revenue") || 0) : Number(existing?.revenue || 0),
+          source: getText("source"),
+          owner: getText("owner"),
+          dmScript: getText("dmScript"),
+          objections: getText("objections"),
+          callFramework: getText("callFramework"),
+          call1Notes: getText("call1Notes"),
+          call2Notes: getText("call2Notes"),
+          coachability: getText("coachability"),
+          preSignDecision: getText("preSignDecision"),
+          voiceNotes: getText("voiceNotes"),
           createdAt: existing?.createdAt || formatDateTimeLabel(),
-          updated: String(formData.get("updated") || "").trim() || formatDateTimeLabel(),
+          updated: formData.has("updated") ? getText("updated") || formatDateTimeLabel() : formatDateTimeLabel(),
           createdRank: existing?.createdRank || DATA.leads.length + 1
         });
 
-        upsertItem(DATA.leads, item);
+        dispatchOp({
+          op_type: "entity.upsert",
+          entity_kind: "leads",
+          entity_id: item.id,
+          value: item
+        });
       }
 
       function saveCreatorForm(formData, id) {
@@ -14114,9 +14480,18 @@
           ops: normalizeCreatorOps(existing?.ops, { id: creatorId })
         };
 
-        upsertItem(DATA.creators, normalizeCreator(item));
+        const normalized = normalizeCreator(item);
+        dispatchOp({
+          op_type: "entity.upsert",
+          entity_kind: "creators",
+          entity_id: normalized.id,
+          value: normalized
+        });
 
         if (existing && existing.name !== item.name) {
+          /* Cascada: actualizar referencias por nombre/id en colecciones aún no
+             migradas a ops. Como esos cambios solo se propagan vía snapshot
+             legacy, dejamos un queueSave al final para que se persistan. */
           DATA.onboardingBlocks = DATA.onboardingBlocks.map((block) =>
             block.creatorName === existing.name ? { ...block, creatorName: item.name } : block
           );
@@ -14141,6 +14516,7 @@
           DATA.chatApprovals = DATA.chatApprovals.map((approval) =>
             approval.creatorId === item.id ? { ...approval, creatorName: item.name } : approval
           );
+          queueSave();
         }
       }
 
@@ -14168,7 +14544,12 @@
           updatedBy: getActorName()
         });
 
-        upsertItem(DATA.tasks, item);
+        dispatchOp({
+          op_type: "entity.upsert",
+          entity_kind: "tasks",
+          entity_id: item.id,
+          value: item
+        });
       }
 
       async function getUploadedFilePayload(formData, fieldName) {
@@ -14312,7 +14693,12 @@
           updatedBy: getActorName()
         });
 
-        upsertItem(DATA.contracts, item);
+        dispatchOp({
+          op_type: "entity.upsert",
+          entity_kind: "contracts",
+          entity_id: item.id,
+          value: item
+        });
       }
 
       function saveChatRoleForm(formData, id) {
@@ -14359,7 +14745,12 @@
         });
 
         appendEntityHistory(item, isNew ? `${getActorName()} creo el canal` : `${getActorName()} actualizo el canal`);
-        upsertItem(DATA.chatChannels, item);
+        dispatchOp({
+          op_type: "entity.upsert",
+          entity_kind: "chatChannels",
+          entity_id: item.id,
+          value: item
+        });
       }
 
       function saveChatAgentForm(formData, id) {
@@ -14377,7 +14768,14 @@
           joinedAt: String(formData.get("joinedAt") || "").trim()
         });
 
-        upsertItem(DATA.chatAgents, item);
+        dispatchOp({
+          op_type: "entity.upsert",
+          entity_kind: "chatAgents",
+          entity_id: item.id,
+          value: item
+        });
+        /* Cascada de nombre del agente en colecciones aún no totalmente migradas
+           a ops (eosReports). El resto se persiste también vía snapshot legacy. */
         DATA.chatTrainings = DATA.chatTrainings.map((training) =>
           training.assignedTo === item.id ? { ...training, assignedToName: item.name } : training
         );
@@ -14390,6 +14788,7 @@
         DATA.chatApprovals = DATA.chatApprovals.map((approval) =>
           approval.chatterId === item.id ? { ...approval, chatterName: item.name } : approval
         );
+        queueSave();
       }
 
       function saveChatTrainingForm(formData, id) {
@@ -14418,7 +14817,12 @@
           updatedBy: getActorName()
         });
 
-        upsertItem(DATA.chatTrainings, item);
+        dispatchOp({
+          op_type: "entity.upsert",
+          entity_kind: "chatTrainings",
+          entity_id: item.id,
+          value: item
+        });
       }
 
       function saveEosReportForm(formData, id) {
@@ -14446,7 +14850,12 @@
           updatedBy: getActorName()
         });
 
-        upsertItem(DATA.eosReports, item);
+        dispatchOp({
+          op_type: "entity.upsert",
+          entity_kind: "eosReports",
+          entity_id: item.id,
+          value: item
+        });
       }
 
       function saveChatMonitoringForm(formData, id) {
@@ -14471,7 +14880,12 @@
           updatedBy: getActorName()
         });
 
-        upsertItem(DATA.chatMonitoring, item);
+        dispatchOp({
+          op_type: "entity.upsert",
+          entity_kind: "chatMonitoring",
+          entity_id: item.id,
+          value: item
+        });
       }
 
       function saveChatApprovalForm(formData, id) {
@@ -14501,7 +14915,12 @@
           notes: String(formData.get("notes") || "").trim()
         });
 
-        upsertItem(DATA.chatApprovals, item);
+        dispatchOp({
+          op_type: "entity.upsert",
+          entity_kind: "chatApprovals",
+          entity_id: item.id,
+          value: item
+        });
       }
 
       function saveFanProfileForm(formData, id) {
@@ -14530,7 +14949,12 @@
           updatedBy: getActorName()
         });
 
-        upsertItem(DATA.fanProfiles, item);
+        dispatchOp({
+          op_type: "entity.upsert",
+          entity_kind: "fanProfiles",
+          entity_id: item.id,
+          value: item
+        });
       }
 
       function saveFanFlowForm(formData, id) {
@@ -14550,7 +14974,12 @@
           updatedBy: getActorName()
         });
 
-        upsertItem(DATA.fanFlow, item);
+        dispatchOp({
+          op_type: "entity.upsert",
+          entity_kind: "fanFlow",
+          entity_id: item.id,
+          value: item
+        });
       }
 
       function saveGfStageForm(formData, id) {
@@ -14568,7 +14997,12 @@
           updatedBy: getActorName()
         });
 
-        upsertItem(DATA.gfStages, item);
+        dispatchOp({
+          op_type: "entity.upsert",
+          entity_kind: "gfStages",
+          entity_id: item.id,
+          value: item
+        });
       }
 
       function saveShiftForm(formData, id) {
@@ -14596,7 +15030,12 @@
           updatedBy: getActorName()
         });
 
-        upsertItem(DATA.shifts, item);
+        dispatchOp({
+          op_type: "entity.upsert",
+          entity_kind: "shifts",
+          entity_id: item.id,
+          value: item
+        });
       }
 
       async function saveSopForm(formData, id) {
@@ -14633,7 +15072,12 @@
           updatedBy: getActorName()
         });
 
-        upsertItem(DATA.sops, item);
+        dispatchOp({
+          op_type: "entity.upsert",
+          entity_kind: "sops",
+          entity_id: item.id,
+          value: item
+        });
       }
 
       function saveHiringCandidateForm(formData, id) {
@@ -14655,7 +15099,12 @@
           updatedBy: getActorName()
         });
 
-        upsertItem(DATA.hiringCandidates, item);
+        dispatchOp({
+          op_type: "entity.upsert",
+          entity_kind: "hiringCandidates",
+          entity_id: item.id,
+          value: item
+        });
       }
 
       function saveProcessMapForm(formData, id) {
@@ -14674,7 +15123,12 @@
           updatedBy: getActorName()
         });
 
-        upsertItem(DATA.processMaps, item);
+        dispatchOp({
+          op_type: "entity.upsert",
+          entity_kind: "processMaps",
+          entity_id: item.id,
+          value: item
+        });
       }
 
       function saveGovernanceEntryForm(formData, id) {
@@ -14694,7 +15148,12 @@
           updatedBy: getActorName()
         });
 
-        upsertItem(DATA.governanceEntries, item);
+        dispatchOp({
+          op_type: "entity.upsert",
+          entity_kind: "governanceEntries",
+          entity_id: item.id,
+          value: item
+        });
       }
 
       function savePaymentForm(formData, id) {
@@ -14717,7 +15176,12 @@
           updatedBy: getActorName()
         });
 
-        upsertItem(DATA.payments, item);
+        dispatchOp({
+          op_type: "entity.upsert",
+          entity_kind: "payments",
+          entity_id: item.id,
+          value: item
+        });
       }
 
       function saveAccountInfrastructureForm(formData, id) {
@@ -14740,7 +15204,12 @@
           updatedBy: getActorName()
         });
 
-        upsertItem(DATA.accountInfrastructure, item);
+        dispatchOp({
+          op_type: "entity.upsert",
+          entity_kind: "accountInfrastructure",
+          entity_id: item.id,
+          value: item
+        });
       }
 
       function saveContentDocForm(formData, id) {
@@ -14759,7 +15228,12 @@
           updatedBy: getActorName()
         });
 
-        upsertItem(DATA.contentDocs, item);
+        dispatchOp({
+          op_type: "entity.upsert",
+          entity_kind: "contentDocs",
+          entity_id: item.id,
+          value: item
+        });
       }
 
       function saveContentStyleForm(formData, id) {
@@ -14777,7 +15251,12 @@
           updatedBy: getActorName()
         });
 
-        upsertItem(DATA.contentStyles, item);
+        dispatchOp({
+          op_type: "entity.upsert",
+          entity_kind: "contentStyles",
+          entity_id: item.id,
+          value: item
+        });
       }
 
       function saveContentVehicleForm(formData, id) {
@@ -14796,7 +15275,12 @@
           updatedBy: getActorName()
         });
 
-        upsertItem(DATA.contentVehicles, item);
+        dispatchOp({
+          op_type: "entity.upsert",
+          entity_kind: "contentVehicles",
+          entity_id: item.id,
+          value: item
+        });
       }
 
       function saveDeliveryFlowForm(formData, id) {
@@ -14817,7 +15301,12 @@
           updatedBy: getActorName()
         });
 
-        upsertItem(DATA.deliveryFlow, item);
+        dispatchOp({
+          op_type: "entity.upsert",
+          entity_kind: "deliveryFlow",
+          entity_id: item.id,
+          value: item
+        });
       }
 
       async function saveEntityForm(form) {
@@ -14836,7 +15325,11 @@
 
         await schema.save(formData, id);
 
-        queueSave();
+        /* Entidades migradas a ops no necesitan que el snapshot legacy se reescriba:
+           dispatchOp ya publicó el cambio y mantiene su propio sync status. */
+        if (!ENTITIES_ON_OPS.has(entity)) {
+          queueSave();
+        }
         return true;
       }
 
@@ -14847,22 +15340,36 @@
         }
 
         if (entity === "lead") {
-          DATA.leads = DATA.leads.filter((item) => item.id !== id);
+          dispatchOp({
+            op_type: "entity.delete",
+            entity_kind: "leads",
+            entity_id: id
+          });
         }
 
         if (entity === "task") {
-          DATA.tasks = DATA.tasks.filter((item) => item.id !== id);
+          dispatchOp({
+            op_type: "entity.delete",
+            entity_kind: "tasks",
+            entity_id: id
+          });
         }
 
         if (entity === "creator") {
           const creator = getEntityItem("creator", id);
-          DATA.creators = DATA.creators.filter((item) => item.id !== id);
+          dispatchOp({
+            op_type: "entity.delete",
+            entity_kind: "creators",
+            entity_id: id
+          });
 
           if (creator) {
+            /* Cascada en colecciones aún no migradas a ops. */
             DATA.onboardingBlocks = DATA.onboardingBlocks.filter((item) => item.creatorName !== creator.name);
             DATA.contentPieces = DATA.contentPieces.filter((item) => item.creatorId !== id);
             DATA.queue = DATA.queue.filter((item) => item.creatorId !== id);
             DATA.metrics = DATA.metrics.filter((item) => item.creatorId !== id);
+            queueSave();
           }
         }
 
@@ -14882,7 +15389,7 @@
         }
 
         if (entity === "contract") {
-          DATA.contracts = DATA.contracts.filter((item) => item.id !== id);
+          dispatchOp({ op_type: "entity.delete", entity_kind: "contracts", entity_id: id });
         }
 
         if (entity === "chatRole") {
@@ -14893,88 +15400,105 @@
         }
 
         if (entity === "chatChannel") {
-          DATA.chatChannels = DATA.chatChannels.filter((item) => item.id !== id);
+          dispatchOp({ op_type: "entity.delete", entity_kind: "chatChannels", entity_id: id });
         }
 
         if (entity === "chatAgent") {
-          DATA.chatAgents = DATA.chatAgents.filter((item) => item.id !== id);
+          dispatchOp({ op_type: "entity.delete", entity_kind: "chatAgents", entity_id: id });
         }
 
         if (entity === "chatTraining") {
-          DATA.chatTrainings = DATA.chatTrainings.filter((item) => item.id !== id);
+          dispatchOp({ op_type: "entity.delete", entity_kind: "chatTrainings", entity_id: id });
         }
 
         if (entity === "eosReport") {
-          DATA.eosReports = DATA.eosReports.filter((item) => item.id !== id);
+          dispatchOp({ op_type: "entity.delete", entity_kind: "eosReports", entity_id: id });
         }
 
         if (entity === "chatMonitoring") {
-          DATA.chatMonitoring = DATA.chatMonitoring.filter((item) => item.id !== id);
+          dispatchOp({ op_type: "entity.delete", entity_kind: "chatMonitoring", entity_id: id });
         }
 
         if (entity === "chatApproval") {
-          DATA.chatApprovals = DATA.chatApprovals.filter((item) => item.id !== id);
+          dispatchOp({ op_type: "entity.delete", entity_kind: "chatApprovals", entity_id: id });
         }
 
         if (entity === "fanProfile") {
-          DATA.fanProfiles = DATA.fanProfiles.filter((item) => item.id !== id);
-          DATA.fanFlow = DATA.fanFlow.filter((item) => item.fanId !== id);
-          DATA.gfStages = DATA.gfStages.filter((item) => item.fanId !== id);
+          /* Cascada migrada: dispatchamos delete para cada fanFlow/gfStage del
+             fan para que el resto de clientes los borre también vía ops. */
+          const relatedFanFlow = DATA.fanFlow.filter((item) => item.fanId === id);
+          const relatedGfStages = DATA.gfStages.filter((item) => item.fanId === id);
+          dispatchOp({ op_type: "entity.delete", entity_kind: "fanProfiles", entity_id: id });
+          relatedFanFlow.forEach((item) => {
+            dispatchOp({ op_type: "entity.delete", entity_kind: "fanFlow", entity_id: item.id });
+          });
+          relatedGfStages.forEach((item) => {
+            dispatchOp({ op_type: "entity.delete", entity_kind: "gfStages", entity_id: item.id });
+          });
         }
 
         if (entity === "fanFlow") {
-          DATA.fanFlow = DATA.fanFlow.filter((item) => item.id !== id);
+          dispatchOp({ op_type: "entity.delete", entity_kind: "fanFlow", entity_id: id });
         }
 
         if (entity === "gfStage") {
-          DATA.gfStages = DATA.gfStages.filter((item) => item.id !== id);
+          dispatchOp({ op_type: "entity.delete", entity_kind: "gfStages", entity_id: id });
         }
 
         if (entity === "shift") {
-          DATA.shifts = DATA.shifts.filter((item) => item.id !== id);
+          dispatchOp({ op_type: "entity.delete", entity_kind: "shifts", entity_id: id });
         }
 
         if (entity === "sop") {
-          DATA.sops = DATA.sops.filter((item) => item.id !== id);
+          dispatchOp({
+            op_type: "entity.delete",
+            entity_kind: "sops",
+            entity_id: id
+          });
         }
 
         if (entity === "hiringCandidate") {
-          DATA.hiringCandidates = DATA.hiringCandidates.filter((item) => item.id !== id);
+          dispatchOp({ op_type: "entity.delete", entity_kind: "hiringCandidates", entity_id: id });
         }
 
         if (entity === "processMap") {
-          DATA.processMaps = DATA.processMaps.filter((item) => item.id !== id);
+          dispatchOp({ op_type: "entity.delete", entity_kind: "processMaps", entity_id: id });
         }
 
         if (entity === "governanceEntry") {
-          DATA.governanceEntries = DATA.governanceEntries.filter((item) => item.id !== id);
+          dispatchOp({ op_type: "entity.delete", entity_kind: "governanceEntries", entity_id: id });
         }
 
         if (entity === "payment") {
-          DATA.payments = DATA.payments.filter((item) => item.id !== id);
+          dispatchOp({ op_type: "entity.delete", entity_kind: "payments", entity_id: id });
         }
 
         if (entity === "accountInfrastructure") {
-          DATA.accountInfrastructure = DATA.accountInfrastructure.filter((item) => item.id !== id);
+          dispatchOp({ op_type: "entity.delete", entity_kind: "accountInfrastructure", entity_id: id });
         }
 
         if (entity === "contentDoc") {
-          DATA.contentDocs = DATA.contentDocs.filter((item) => item.id !== id);
+          dispatchOp({ op_type: "entity.delete", entity_kind: "contentDocs", entity_id: id });
         }
 
         if (entity === "contentStyle") {
-          DATA.contentStyles = DATA.contentStyles.filter((item) => item.id !== id);
+          dispatchOp({ op_type: "entity.delete", entity_kind: "contentStyles", entity_id: id });
         }
 
         if (entity === "contentVehicle") {
-          DATA.contentVehicles = DATA.contentVehicles.filter((item) => item.id !== id);
+          dispatchOp({ op_type: "entity.delete", entity_kind: "contentVehicles", entity_id: id });
         }
 
         if (entity === "deliveryFlow") {
-          DATA.deliveryFlow = DATA.deliveryFlow.filter((item) => item.id !== id);
+          dispatchOp({ op_type: "entity.delete", entity_kind: "deliveryFlow", entity_id: id });
         }
 
-        queueSave();
+        /* Las entidades migradas a ops ya propagaron el delete; el snapshot
+           legacy solo hace falta para las no migradas (sus mutaciones siguen
+           viviendo en el documento JSON compartido). */
+        if (!ENTITIES_ON_OPS.has(entity)) {
+          queueSave();
+        }
       }
 
       function completeChatTraining(id) {
@@ -14982,7 +15506,12 @@
         if (!training) return;
         training.status = "completado";
         training.completedAt = training.completedAt || formatDateTimeLabel();
-        queueSave();
+        dispatchOp({
+          op_type: "entity.upsert",
+          entity_kind: "chatTrainings",
+          entity_id: training.id,
+          value: training
+        });
       }
 
       function updateChatApprovalStatus(id, status) {
@@ -14998,12 +15527,22 @@
           approval.approvedAt = approval.approvedAt || formatDateTimeLabel();
         }
 
-        queueSave();
+        dispatchOp({
+          op_type: "entity.upsert",
+          entity_kind: "chatApprovals",
+          entity_id: approval.id,
+          value: approval
+        });
       }
 
       function touchChatChannel(channel, message) {
         touchEntityItem(channel, message);
-        queueSave();
+        dispatchOp({
+          op_type: "entity.upsert",
+          entity_kind: "chatChannels",
+          entity_id: channel.id,
+          value: channel
+        });
       }
 
       function saveChannelInlineForm(form) {
@@ -20009,7 +20548,12 @@
             lead.status = nextStatus;
             lead.updated = formatDateTimeLabel();
             touchEntityItem(lead, `${getActorName()} cambio estado a ${LEAD_STATUS_LABELS[nextStatus] || nextStatus}`);
-            queueSave();
+            dispatchOp({
+              op_type: "entity.upsert",
+              entity_kind: "leads",
+              entity_id: lead.id,
+              value: lead
+            });
             render({ focusSelector: `[data-action="${action}"][data-id="${id}"]` });
             return;
           }
@@ -20041,7 +20585,12 @@
             lead.status = nextStatus;
             lead.updated = formatDateTimeLabel();
             touchEntityItem(lead, `${getActorName()} cambio estado a ${LEAD_STATUS_LABELS[nextStatus] || nextStatus}`);
-            queueSave();
+            dispatchOp({
+              op_type: "entity.upsert",
+              entity_kind: "leads",
+              entity_id: lead.id,
+              value: lead
+            });
             render({ focusSelector: '.call-drawer [data-action="close-modal"]' });
             return;
           }
@@ -20395,7 +20944,12 @@
           lead.preSignDecision = String(fd.get("preSignDecision") || "").trim();
           lead.updated = formatDateTimeLabel();
           touchEntityItem(lead, `${getActorName()} actualizo notas de call`);
-          queueSave();
+          dispatchOp({
+            op_type: "entity.upsert",
+            entity_kind: "leads",
+            entity_id: lead.id,
+            value: lead
+          });
           const status = callNotesForm.querySelector("[data-call-notes-status]");
           if (status) {
             status.textContent = `Guardado · ${formatDateTimeLabel()}`;
@@ -20511,8 +21065,13 @@
         const task = DATA.tasks.find((item) => item.id === taskId);
         if (!task) return;
 
-        task.status = target.value;
-        queueSave();
+        dispatchOp({
+          op_type: "field.set",
+          entity_kind: "tasks",
+          entity_id: taskId,
+          field_path: "status",
+          value: target.value
+        });
         render({ focusSelector: `[data-task-select="${taskId}"]` });
       });
 
