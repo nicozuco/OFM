@@ -5578,6 +5578,8 @@
         analitica: "Analitica",
         escalado: "Escalado",
         contenido: "Contenido",
+        tareas: "Tareas",
+        credenciales: "Credenciales",
         gobierno: "Gobierno",
         procesos: "Procesos",
         usuarios: "Usuarios"
@@ -5741,6 +5743,7 @@
             chatting: { read: true, create: false, edit: true, delete: false, approve: true, upload: false, download: false },
             analitica: { read: true, create: false, edit: false, delete: false, approve: false, upload: false, download: false },
             escalado: { read: true, create: false, edit: false, delete: false, approve: false, upload: false, download: false },
+            tareas: { read: true, create: true, edit: true, delete: true, approve: false, upload: false, download: false },
             gobierno: { read: true, create: true, edit: true, delete: false, approve: false, upload: false, download: false }
           }
         },
@@ -5751,7 +5754,8 @@
             perfiles: { read: true, create: false, edit: true, delete: false, approve: false, upload: false, download: false },
             sops: { read: true, create: true, edit: true, delete: false, approve: false, upload: true, download: true },
             analitica: { read: true, create: false, edit: false, delete: false, approve: false, upload: false, download: false },
-            chatting: { read: true, create: false, edit: false, delete: false, approve: false, upload: false, download: false }
+            chatting: { read: true, create: false, edit: false, delete: false, approve: false, upload: false, download: false },
+            tareas: { read: true, create: true, edit: true, delete: false, approve: false, upload: false, download: false }
           }
         },
         chat_manager: {
@@ -5761,6 +5765,7 @@
             sops: { read: true, create: true, edit: true, delete: false, approve: false, upload: true, download: true },
             perfiles: { read: true, create: false, edit: false, delete: false, approve: false, upload: false, download: false },
             analitica: { read: true, create: false, edit: false, delete: false, approve: false, upload: false, download: false },
+            tareas: { read: true, create: true, edit: true, delete: false, approve: false, upload: false, download: false },
             gobierno: { read: true, create: true, edit: true, delete: false, approve: false, upload: false, download: false }
           }
         },
@@ -5770,7 +5775,8 @@
             chatting: { read: true, create: true, edit: true, delete: false, approve: true, upload: false, download: false },
             sops: { read: true, create: false, edit: false, delete: false, approve: false, upload: false, download: true },
             perfiles: { read: true, create: false, edit: false, delete: false, approve: false, upload: false, download: false },
-            analitica: { read: true, create: false, edit: false, delete: false, approve: false, upload: false, download: false }
+            analitica: { read: true, create: false, edit: false, delete: false, approve: false, upload: false, download: false },
+            tareas: { read: true, create: false, edit: true, delete: false, approve: false, upload: false, download: false }
           }
         },
         chatter: {
@@ -5778,14 +5784,16 @@
           permissions: {
             chatting: { read: true, create: true, edit: true, delete: false, approve: false, upload: false, download: false },
             sops: { read: true, create: false, edit: false, delete: false, approve: false, upload: false, download: true },
-            perfiles: { read: true, create: false, edit: false, delete: false, approve: false, upload: false, download: false }
+            perfiles: { read: true, create: false, edit: false, delete: false, approve: false, upload: false, download: false },
+            tareas: { read: true, create: false, edit: true, delete: false, approve: false, upload: false, download: false }
           }
         },
         reliever: {
           description: "Cubre turnos, relevos y soporte puntual dentro del entorno de chatting.",
           permissions: {
             chatting: { read: true, create: true, edit: true, delete: false, approve: false, upload: false, download: false },
-            sops: { read: true, create: false, edit: false, delete: false, approve: false, upload: false, download: true }
+            sops: { read: true, create: false, edit: false, delete: false, approve: false, upload: false, download: true },
+            tareas: { read: true, create: false, edit: true, delete: false, approve: false, upload: false, download: false }
           }
         },
         va: {
@@ -5794,14 +5802,16 @@
             contenido: { read: true, create: true, edit: true, delete: false, approve: false, upload: true, download: true },
             sops: { read: true, create: false, edit: false, delete: false, approve: false, upload: false, download: true },
             perfiles: { read: true, create: false, edit: false, delete: false, approve: false, upload: false, download: false },
-            chatting: { read: true, create: false, edit: false, delete: false, approve: false, upload: false, download: false }
+            chatting: { read: true, create: false, edit: false, delete: false, approve: false, upload: false, download: false },
+            tareas: { read: true, create: false, edit: true, delete: false, approve: false, upload: false, download: false }
           }
         },
         trial: {
           description: "Acceso limitado para pruebas de proceso y evaluación interna.",
           permissions: {
             chatting: { read: true, create: false, edit: false, delete: false, approve: false, upload: false, download: false },
-            sops: { read: true, create: false, edit: false, delete: false, approve: false, upload: false, download: true }
+            sops: { read: true, create: false, edit: false, delete: false, approve: false, upload: false, download: true },
+            tareas: { read: true, create: false, edit: true, delete: false, approve: false, upload: false, download: false }
           }
         },
         viewer: {
@@ -5812,7 +5822,8 @@
             chatting: { read: true, create: false, edit: false, delete: false, approve: false, upload: false, download: false },
             sops: { read: true, create: false, edit: false, delete: false, approve: false, upload: false, download: true },
             analitica: { read: true, create: false, edit: false, delete: false, approve: false, upload: false, download: false },
-            escalado: { read: true, create: false, edit: false, delete: false, approve: false, upload: false, download: false }
+            escalado: { read: true, create: false, edit: false, delete: false, approve: false, upload: false, download: false },
+            tareas: { read: true, create: false, edit: false, delete: false, approve: false, upload: false, download: false }
           }
         }
       };
@@ -7749,6 +7760,22 @@
         };
       }
 
+      function getRolePresetPermissionDefaults(role, moduleKey) {
+        const roleKey = String(role?.key || getAppRoleById(role?.id)?.key || "");
+        const actions = APP_ROLE_PRESETS[roleKey]?.permissions?.[moduleKey] || {};
+        return {
+          roleId: role?.id || "",
+          moduleKey,
+          read: Boolean(actions.read),
+          create: Boolean(actions.create),
+          edit: Boolean(actions.edit),
+          delete: Boolean(actions.delete),
+          approve: Boolean(actions.approve),
+          upload: Boolean(actions.upload),
+          download: Boolean(actions.download)
+        };
+      }
+
       function normalizeAppUser(user, creators = DATA.creators) {
         const base = isPlainObject(user) ? user : {};
         return {
@@ -8106,7 +8133,7 @@
         const rolePermissions = appRoles.flatMap((role) => {
           return Object.keys(RBAC_MODULE_LABELS).map((moduleKey) => {
             return rawRolePermissions.find((permission) => permission.roleId === role.id && permission.moduleKey === moduleKey)
-              || normalizeRolePermission({ roleId: role.id, moduleKey });
+              || normalizeRolePermission(getRolePresetPermissionDefaults(role, moduleKey));
           });
         });
 
@@ -9345,6 +9372,25 @@
         return isBootstrapWorkspaceOwner(user, data);
       }
 
+      function getAuthAccessIssue() {
+        if (!authUser || !hasHydratedApp) return null;
+        const matchedUser = getAuthenticatedAppUser();
+
+        if (matchedUser?.status === "inactive") {
+          return {
+            title: "Acceso desactivado",
+            message: "Tu usuario existe en el equipo, pero está marcado como inactivo. Pide a un propietario que reactive tu acceso desde Usuarios."
+          };
+        }
+
+        if (matchedUser || isWorkspaceOwnerAuthUser()) return null;
+
+        return {
+          title: "Usuario sin acceso",
+          message: "Has iniciado sesión correctamente, pero este email no está dado de alta en Usuarios. Pide a un propietario que cree tu usuario y te asigne un rol."
+        };
+      }
+
       function bootstrapWorkspaceOwnerFromAuth(user = authUser) {
         if (!isBootstrapWorkspaceOwner(user, DATA)) return false;
 
@@ -9378,7 +9424,7 @@
       function getInternalCurrentUser() {
         const matched = getAuthenticatedAppUser();
 
-        if (matched && matched.status !== "inactive") return matched;
+        if (matched) return matched;
 
         if (isWorkspaceOwnerAuthUser()) {
           return {
@@ -9398,7 +9444,7 @@
           email: getActorEmail(),
           roleId: "role-viewer",
           roleName: "Solo lectura",
-          status: "active",
+          status: "inactive",
           assignedCreators: []
         };
       }
@@ -9625,23 +9671,57 @@
         return ["Owner", "Propietario"].includes(user.roleName) || user.roleId === "role-owner";
       }
 
+      function isActiveInternalUser(user = getInternalCurrentUser()) {
+        return Boolean(user && user.status !== "inactive");
+      }
+
+      function getInternalUserRoleKey(user = getInternalCurrentUser()) {
+        return String(getAppRoleById(user?.roleId)?.key || "").trim();
+      }
+
+      function hasGlobalCreatorScope(user = getInternalCurrentUser()) {
+        if (isOwnerUser(user)) return true;
+        if (!isActiveInternalUser(user)) return false;
+        const roleKey = getInternalUserRoleKey(user);
+        if (["account_manager", "content_manager", "chat_manager"].includes(roleKey)) return true;
+        const profilePermission = getRolePermission(user.roleId, "perfiles");
+        return Boolean(profilePermission?.create || profilePermission?.delete);
+      }
+
       function hasAssignedCreatorAccess(creatorId = "", creatorName = "", user = getInternalCurrentUser()) {
         if (isOwnerUser(user)) return true;
+        if (!isActiveInternalUser(user)) return false;
         const assigned = normalizeTextList(user.assignedCreators);
-        if (!assigned.length) return true;
-        return assigned.includes(String(creatorId || "")) || assigned.includes(String(creatorName || ""));
+        if (!assigned.length) return hasGlobalCreatorScope(user);
+        const creator = creatorId ? getCreatorById(creatorId) : null;
+        const contextValues = [
+          creatorId,
+          creatorName,
+          creator?.id,
+          creator?.name,
+          creator?.handle
+        ].map((value) => String(value || "").trim().toLowerCase()).filter(Boolean);
+        const assignedValues = assigned.map((value) => String(value || "").trim().toLowerCase()).filter(Boolean);
+        return contextValues.some((value) => assignedValues.includes(value));
       }
 
       function canAccessModule(moduleKey, action = "read", creatorContext = {}) {
         const user = getInternalCurrentUser();
         if (isOwnerUser(user)) return true;
-        if (user.status === "inactive") return false;
+        if (!isActiveInternalUser(user)) return false;
         const permission = getRolePermission(user.roleId, moduleKey);
         if (!permission || !permission[action]) return false;
         if (creatorContext && (creatorContext.creatorId || creatorContext.creatorName)) {
           return hasAssignedCreatorAccess(creatorContext.creatorId, creatorContext.creatorName, user);
         }
         return true;
+      }
+
+      function canAccessAnyModule(moduleKeys = [], action = "read") {
+        const user = getInternalCurrentUser();
+        if (isOwnerUser(user)) return true;
+        if (!isActiveInternalUser(user)) return false;
+        return moduleKeys.some((moduleKey) => canAccessModule(moduleKey, action));
       }
 
       function filterByCreatorAccess(items, creatorIdKey = "creatorId", creatorNameKey = "creatorName") {
@@ -9651,6 +9731,90 @@
         }));
       }
 
+      function getCreatorPermissionContext(item = {}, creatorIdKey = "creatorId", creatorNameKey = "creatorName") {
+        const creatorId = String(item?.[creatorIdKey] || "").trim();
+        const creator = creatorId ? getCreatorById(creatorId) : null;
+        return {
+          creatorId,
+          creatorName: String(item?.[creatorNameKey] || creator?.name || "").trim()
+        };
+      }
+
+      function canAccessCreatorScopedItem(moduleKey, item = {}, action = "read", creatorIdKey = "creatorId", creatorNameKey = "creatorName") {
+        const context = getCreatorPermissionContext(item, creatorIdKey, creatorNameKey);
+        if (context.creatorId || context.creatorName) {
+          return canAccessModule(moduleKey, action, context);
+        }
+        return canAccessModule(moduleKey, action) && hasGlobalCreatorScope();
+      }
+
+      function getVisibleCreatorsForModule(moduleKey = "perfiles") {
+        return DATA.creators.filter((creator) => canAccessModule(moduleKey, "read", {
+          creatorId: creator.id,
+          creatorName: creator.name
+        }));
+      }
+
+      function getVisibleOnboardingBlocks() {
+        return DATA.onboardingBlocks.filter((block) => canAccessCreatorScopedItem("perfiles", block, "read", "creatorId", "creatorName"));
+      }
+
+      function hasGlobalModuleRecordScope(moduleKey, user = getInternalCurrentUser()) {
+        if (isOwnerUser(user)) return true;
+        if (!isActiveInternalUser(user)) return false;
+        const roleKey = getInternalUserRoleKey(user);
+        if (["account_manager", "content_manager", "chat_manager"].includes(roleKey)) return true;
+        const permission = getRolePermission(user.roleId, moduleKey);
+        return Boolean(permission?.delete || permission?.approve);
+      }
+
+      function isOwnedByCurrentWorker(item = {}, fields = ["owner", "createdBy", "updatedBy"]) {
+        const refs = getCurrentWorkerReferenceSet();
+        return fields.some((field) => {
+          const normalized = String(item?.[field] || "").trim().toLowerCase();
+          return Boolean(normalized && refs.has(normalized));
+        });
+      }
+
+      function canAccessLeadRecord(lead = {}, action = "read") {
+        if (!canAccessModule("clientes", action, getCreatorPermissionContext(lead))) return false;
+        if (hasGlobalModuleRecordScope("clientes")) return true;
+        if (isOwnedByCurrentWorker(lead, ["owner", "createdBy", "updatedBy"])) return true;
+        const context = getCreatorPermissionContext(lead);
+        return Boolean((context.creatorId || context.creatorName) && hasAssignedCreatorAccess(context.creatorId, context.creatorName));
+      }
+
+      function getVisibleLeads() {
+        return DATA.leads.filter((lead) => canAccessLeadRecord(lead, "read"));
+      }
+
+      function hasGlobalTaskScope(user = getInternalCurrentUser(), permission = getRolePermission(user?.roleId, "tareas")) {
+        if (isOwnerUser(user)) return true;
+        if (!isActiveInternalUser(user)) return false;
+        const roleKey = getInternalUserRoleKey(user);
+        if (["account_manager", "content_manager", "chat_manager"].includes(roleKey)) return true;
+        return Boolean(permission?.create || permission?.delete || permission?.approve);
+      }
+
+      function canPerformTaskAction(action = "read", id = "") {
+        const user = getInternalCurrentUser();
+        if (isOwnerUser(user)) return true;
+        if (!isActiveInternalUser(user)) return false;
+        const permission = getRolePermission(user.roleId, "tareas");
+        if (!permission || !permission[action]) return false;
+        if (action === "create") return hasGlobalTaskScope(user, permission);
+        if (!id) return action === "read";
+        const task = getEntityItem("task", id);
+        if (!task) return false;
+        if (hasGlobalTaskScope(user, permission)) return true;
+        if (action === "delete") return false;
+        return ["read", "edit"].includes(action) && isTaskAssignedToCurrentWorker(task);
+      }
+
+      function getVisibleTasks() {
+        return DATA.tasks.filter((task) => canPerformTaskAction("read", task.id));
+      }
+
       function ensureAllowedView() {
         const allowedViews = Object.keys(VIEW_META).filter((viewKey) => canView(viewKey));
         if (allowedViews.includes(state.view)) return;
@@ -9658,15 +9822,22 @@
       }
 
       function canView(viewKey) {
+        if (!isActiveInternalUser()) return false;
+        if (viewKey === "dashboard") {
+          return canAccessAnyModule(["clientes", "perfiles", "chatting", "contenido", "tareas", "sops", "analitica", "escalado"], "read");
+        }
+        if (viewKey === "manual") return true;
+
         const moduleByView = {
           prospects: "clientes",
           leads: "clientes",
           creators: "perfiles",
           content: "contenido",
+          tasks: "tareas",
           chatting: "chatting",
           contracts: "contratos",
           users: "usuarios",
-          passwords: "usuarios",
+          passwords: "credenciales",
           sops: "sops",
           analytics: "analitica",
           scaling: "escalado",
@@ -9677,7 +9848,7 @@
         };
 
         const moduleKey = moduleByView[viewKey];
-        return moduleKey ? canAccessModule(moduleKey, "read") : true;
+        return moduleKey ? canAccessModule(moduleKey, "read") : false;
       }
 
       function getModuleForEntity(entity) {
@@ -9687,9 +9858,10 @@
         const mapping = {
           lead: "clientes",
           creator: "perfiles",
+          task: "tareas",
           appUser: "usuarios",
           appRole: "usuarios",
-          passwordCredential: "usuarios",
+          passwordCredential: "credenciales",
           contract: "contratos",
           chatRole: "chatting",
           chatChannel: "chatting",
@@ -9727,6 +9899,13 @@
       }
 
       function canPerformEntityAction(entity, action, id = "") {
+        if (entity === "task") return canPerformTaskAction(action, id);
+        if (!isActiveInternalUser()) return false;
+        if (entity === "lead") {
+          if (action === "create") return canAccessModule("clientes", "create");
+          const lead = id ? getEntityItem("lead", id) : null;
+          return lead ? canAccessLeadRecord(lead, action) : canAccessModule("clientes", action);
+        }
         const moduleKey = getModuleForEntity(entity);
         if (!moduleKey) return true;
         return canAccessModule(moduleKey, action, getEntityPermissionContext(entity, id));
@@ -10168,7 +10347,7 @@
       }
 
       function getActiveTasks() {
-        return DATA.tasks.filter((task) => !["done", "cancelled"].includes(task.status));
+        return getVisibleTasks().filter((task) => !["done", "cancelled"].includes(task.status));
       }
 
       function isTaskOverdue(task) {
@@ -10198,6 +10377,8 @@
           current?.id,
           current?.email,
           current?.name,
+          current?.roleName,
+          displayRoleName(current?.roleName || ""),
           getActorEmail(),
           getActorName(),
           ...(!matchedUser ? [DATA.user.email, DATA.user.name] : [])
@@ -10228,36 +10409,44 @@
       }
 
       function getAtRiskCreators() {
-        return DATA.creators.filter((creator) => creator.retention === "at_risk");
+        return getVisibleCreatorsForModule("perfiles").filter((creator) => creator.retention === "at_risk");
       }
 
       function getCloseReadyLeads() {
         const readyStatuses = ["call2", "verbal_yes", "contract_sent", "signed"];
-        return DATA.leads.filter((lead) => readyStatuses.includes(lead.status));
+        return getVisibleLeads().filter((lead) => readyStatuses.includes(lead.status));
       }
 
       function getRevenueSnapshot() {
-        const latestMetrics = getLatestMetricsByCreator();
+        const latestMetrics = getLatestMetricsByCreator().filter((metric) =>
+          canAccessCreatorScopedItem("analitica", metric, "read")
+        );
         const totalRevenue = latestMetrics.reduce((sum, item) => sum + item.revenue, 0);
         const totalMargin = latestMetrics.reduce((sum, item) => sum + item.margin, 0);
         const closeReadyRevenue = getCloseReadyLeads().reduce((sum, lead) => sum + lead.revenue, 0);
-        const winRate = DATA.contentPieces.length
-          ? Math.round((DATA.contentPieces.filter((piece) => piece.status === "winner").length / DATA.contentPieces.length) * 100)
+        const visibleContentPieces = DATA.contentPieces.filter((piece) => canAccessCreatorScopedItem("contenido", piece, "read"));
+        const visibleQueue = DATA.queue.filter((item) => canAccessCreatorScopedItem("contenido", item, "read"));
+        const winRate = visibleContentPieces.length
+          ? Math.round((visibleContentPieces.filter((piece) => piece.status === "winner").length / visibleContentPieces.length) * 100)
           : 0;
-        const failedPosts = DATA.queue.filter((item) => item.status === "failed").length;
+        const failedPosts = visibleQueue.filter((item) => item.status === "failed").length;
         return { totalRevenue, totalMargin, closeReadyRevenue, winRate, failedPosts };
       }
 
       function getSystemKpis() {
-        const onboardingCreators = DATA.creators.filter((creator) => creator.stage === "onboarding").length;
-        const contentWinners = DATA.contentPieces.filter((piece) => piece.status === "winner").length;
-        const contentLosers = DATA.contentPieces.filter((piece) => piece.status === "loser").length;
+        const visibleCreators = getVisibleCreatorsForModule("perfiles");
+        const visibleBlocks = getVisibleOnboardingBlocks();
+        const visibleContentPieces = DATA.contentPieces.filter((piece) => canAccessCreatorScopedItem("contenido", piece, "read"));
+        const visibleQueue = DATA.queue.filter((item) => canAccessCreatorScopedItem("contenido", item, "read"));
+        const onboardingCreators = visibleCreators.filter((creator) => creator.stage === "onboarding").length;
+        const contentWinners = visibleContentPieces.filter((piece) => piece.status === "winner").length;
+        const contentLosers = visibleContentPieces.filter((piece) => piece.status === "loser").length;
         const activeChatters = DATA.chatAgents.filter((agent) => agent.status === "activo").length;
         const monitoringIssues = DATA.chatMonitoring.filter((item) => item.status !== "correcto" || Number(item.score) < 80).length;
         const hiredCandidates = DATA.hiringCandidates.filter((candidate) => candidate.status === "contratado").length;
         const trials = DATA.hiringCandidates.filter((candidate) => candidate.status === "trial").length;
-        const atRisk = DATA.creators.filter((creator) => creator.retention === "at_risk").length;
-        const neutral = DATA.creators.filter((creator) => creator.retention === "neutral").length;
+        const atRisk = visibleCreators.filter((creator) => creator.retention === "at_risk").length;
+        const neutral = visibleCreators.filter((creator) => creator.retention === "neutral").length;
         const acquisitionReady = getCloseReadyLeads();
 
         return [
@@ -10266,21 +10455,21 @@
             view: "creators",
           title: "Alta inicial",
             value: onboardingCreators,
-            sub: `${DATA.onboardingBlocks.length} bloqueos activos`
+            sub: `${visibleBlocks.length} bloqueos activos`
           },
           {
             key: "contenido",
             view: "content",
             title: "Contenido",
             value: `${contentWinners}/${Math.max(contentWinners + contentLosers, 1)}`,
-            sub: `${DATA.contentPieces.filter((piece) => ["idea", "scripted"].includes(piece.status)).length} piezas pendientes`
+            sub: `${visibleContentPieces.filter((piece) => ["idea", "scripted"].includes(piece.status)).length} piezas pendientes`
           },
           {
             key: "marketing",
             view: "content",
             title: "Marketing",
-            value: DATA.queue.filter((item) => item.status === "scheduled").length,
-            sub: `${DATA.queue.filter((item) => item.status === "failed").length} fallos en salida`
+            value: visibleQueue.filter((item) => item.status === "scheduled").length,
+            sub: `${visibleQueue.filter((item) => item.status === "failed").length} fallos en salida`
           },
           {
             key: "chatting",
@@ -10334,14 +10523,17 @@
       function getDashboardStats() {
         const criticalTasks = getCriticalTasks();
         const atRisk = getAtRiskCreators();
-        const activeCreators = DATA.creators.filter((creator) => creator.stage === "active").length;
-        const onboardingCreators = DATA.creators.filter((creator) => creator.stage === "onboarding").length;
+        const visibleCreators = getVisibleCreatorsForModule("perfiles");
+        const visibleBlocks = getVisibleOnboardingBlocks();
+        const visibleContentPieces = DATA.contentPieces.filter((piece) => canAccessCreatorScopedItem("contenido", piece, "read"));
+        const activeCreators = visibleCreators.filter((creator) => creator.stage === "active").length;
+        const onboardingCreators = visibleCreators.filter((creator) => creator.stage === "onboarding").length;
         const pendingTasks = getActiveTasks().length;
-        const backlog = DATA.contentPieces.filter((piece) => ["idea", "scripted"].includes(piece.status)).length;
+        const backlog = visibleContentPieces.filter((piece) => ["idea", "scripted"].includes(piece.status)).length;
         const closeReady = getCloseReadyLeads();
 
         return {
-          totalLeads: DATA.leads.filter((lead) => !isProspectStatus(lead.status)).length,
+          totalLeads: getVisibleLeads().filter((lead) => !isProspectStatus(lead.status)).length,
           activeCreators,
           onboardingCreators,
           pendingTasks,
@@ -10349,8 +10541,8 @@
           atRisk,
           backlog,
           closeReady,
-          onboardingBlocksCount: DATA.onboardingBlocks.length,
-          blockingAlerts: criticalTasks.length + DATA.onboardingBlocks.length + atRisk.length
+          onboardingBlocksCount: visibleBlocks.length,
+          blockingAlerts: criticalTasks.length + visibleBlocks.length + atRisk.length
         };
       }
 
@@ -10368,7 +10560,7 @@
           });
         });
 
-        DATA.onboardingBlocks.forEach((item) => {
+        getVisibleOnboardingBlocks().forEach((item) => {
           actions.push({
             id: item.id,
             title: item.title,
@@ -10491,7 +10683,7 @@
         const options = includeAll ? [["", "Sin asignar"]] : [];
         return [
           ...options,
-          ...DATA.creators.map((creator) => [creator.id, creator.name])
+          ...getVisibleCreatorsForModule("perfiles").map((creator) => [creator.id, creator.name])
         ];
       }
 
@@ -10715,6 +10907,7 @@
       function markProfileTaskStatus(creatorId, taskId, done) {
         const creator = getCreatorById(creatorId);
         if (!creator) return;
+        if (!canPerformEntityAction("creator", "edit", creator.id)) return;
 
         creator.ops.tasks = getProfileTasks(creator).map((task) => {
           if (task.id !== taskId) return task;
@@ -10732,6 +10925,7 @@
       function addProfileTask(creatorId, payload) {
         const creator = getCreatorById(creatorId);
         if (!creator) return;
+        if (!canPerformEntityAction("creator", "edit", creator.id)) return;
 
         creator.ops.tasks.unshift(
           normalizeProfileTask(
@@ -10762,6 +10956,7 @@
       function addProfileNote(creatorId, payload) {
         const creator = getCreatorById(creatorId);
         if (!creator) return;
+        if (!canPerformEntityAction("creator", "edit", creator.id)) return;
 
         creator.ops.notes.unshift({
           id: createId("perfil-note"),
@@ -10777,6 +10972,7 @@
       function updateProfileBlock(creatorId, block, values) {
         const creator = getCreatorById(creatorId);
         if (!creator) return;
+        if (!canPerformEntityAction("creator", "edit", creator.id)) return;
 
         creator.ops[block] = {
           ...(creator.ops[block] || {}),
@@ -11242,7 +11438,7 @@
           singular: "tarea",
           plural: "tareas",
           collection: "tasks",
-          module: null,
+          module: "tareas",
           idPrefix: "task",
           save: saveTaskForm,
           supports: { create: true, edit: true, delete: true, duplicate: true, archive: true },
@@ -11289,7 +11485,7 @@
           singular: "credencial",
           plural: "credenciales",
           collection: "passwordVault",
-          module: "usuarios",
+          module: "credenciales",
           idPrefix: "password",
           save: savePasswordCredentialForm,
           supports: { create: true, edit: true, delete: true, duplicate: true, archive: true },
@@ -11841,10 +12037,10 @@
         chatRole: () => getChatRoleSelectOptions(true),
         chatter: () => getChatAgentSelectOptions(true),
         creator: () => getCreatorSelectOptions(true),
-        fan: () => [["", "Sin fan"], ...DATA.fanProfiles.map((fan) => [fan.id, fan.fanName])],
+        fan: () => [["", "Sin fan"], ...DATA.fanProfiles.filter((fan) => canAccessCreatorScopedItem("chatting", fan, "read")).map((fan) => [fan.id, fan.fanName])],
         owner: ({ value }) => getUserSelectOptions({ currentValue: Array.isArray(value) ? "" : value }),
-        sop: () => [["", "Sin SOP"], ...DATA.sops.map((sop) => [sop.id, sop.title])],
-        task: () => [["", "Sin tarea"], ...DATA.tasks.map((task) => [task.id, task.title])],
+        sop: () => [["", "Sin SOP"], ...DATA.sops.filter((sop) => canPerformEntityAction("sop", "read", sop.id)).map((sop) => [sop.id, sop.title])],
+        task: () => [["", "Sin tarea"], ...getVisibleTasks().map((task) => [task.id, task.title])],
         training: () => [["", "Sin formacion"], ...DATA.chatTrainings.map((training) => [training.id, training.title])]
       };
 
@@ -12787,7 +12983,7 @@
 
         if (state.activeForm.entity === "fanFlow") {
           return `
-            ${renderSelectField("Fan", "fanId", draft.fanId, [["", "Sin fan"], ...DATA.fanProfiles.map((fan) => [fan.id, fan.fanName])])}
+            ${renderSelectField("Fan", "fanId", draft.fanId, [["", "Sin fan"], ...DATA.fanProfiles.filter((fan) => canAccessCreatorScopedItem("chatting", fan, "read")).map((fan) => [fan.id, fan.fanName])])}
             ${renderSelectField("Creadora", "creatorId", draft.creatorId, getCreatorSelectOptions(true))}
             ${renderSelectField("Etapa", "stage", draft.stage, Object.entries(FAN_STAGE_LABELS))}
             ${renderSelectField("Estado", "status", draft.status, Object.entries(PROCESS_STATUS_LABELS))}
@@ -12798,7 +12994,7 @@
 
         if (state.activeForm.entity === "gfStage") {
           return `
-            ${renderSelectField("Fan", "fanId", draft.fanId, [["", "Sin fan"], ...DATA.fanProfiles.map((fan) => [fan.id, fan.fanName])])}
+            ${renderSelectField("Fan", "fanId", draft.fanId, [["", "Sin fan"], ...DATA.fanProfiles.filter((fan) => canAccessCreatorScopedItem("chatting", fan, "read")).map((fan) => [fan.id, fan.fanName])])}
             ${renderSelectField("Creadora", "creatorId", draft.creatorId, getCreatorSelectOptions(true))}
             ${renderSelectField("Etapa GF", "stage", draft.stage, Object.entries(GF_STAGE_LABELS))}
             ${renderSelectField("Estado", "status", draft.status, Object.entries(PROCESS_STATUS_LABELS))}
@@ -12828,9 +13024,9 @@
             ${renderTextareaField("Contenido", "body", draft.body, { full: true, placeholder: "Contenido operativo completo del SOP" })}
             ${renderInputField("URL de recurso", "resourceUrl", draft.resourceUrl, { full: true, type: "url", placeholder: "https://..." })}
             ${renderFileField("Archivo opcional", "fileUpload", draft.fileName, { full: true, accept: ".pdf,.doc,.docx,image/*" })}
-            ${renderSelectField("Tarea vinculada", "linkedTaskId", draft.linkedTaskId, [["", "Sin tarea"], ...DATA.tasks.map((task) => [task.id, task.title])], { full: true })}
+            ${renderSelectField("Tarea vinculada", "linkedTaskId", draft.linkedTaskId, [["", "Sin tarea"], ...getVisibleTasks().map((task) => [task.id, task.title])], { full: true })}
             ${renderSelectField("Formacion vinculada", "linkedTrainingId", draft.linkedTrainingId, [["", "Sin formacion"], ...DATA.chatTrainings.map((training) => [training.id, training.title])], { full: true })}
-            ${renderSelectField("Alta inicial vinculada", "linkedOnboardingId", draft.linkedOnboardingId, [["", "Sin alta inicial"], ...DATA.creators.map((creator) => [creator.id, creator.name])], { full: true })}
+            ${renderSelectField("Alta inicial vinculada", "linkedOnboardingId", draft.linkedOnboardingId, [["", "Sin alta inicial"], ...getVisibleCreatorsForModule("perfiles").map((creator) => [creator.id, creator.name])], { full: true })}
           `;
         }
 
@@ -13062,6 +13258,7 @@
 
       function renderProfileTaskCard(creatorId, task, options = {}) {
         const isDone = isProfileTaskDone(task);
+        const canEditCreator = canPerformEntityAction("creator", "edit", creatorId);
         /* Mostramos sólo las etiquetas realmente importantes — sin ruido */
         const metaBadges = [
           task.blocked ? badge("Bloqueo", "danger") : "",
@@ -13078,17 +13275,17 @@
             </div>
             <div class="profile-task-meta">
               ${task.owner ? `<span class="dim">${escapeHtml(getUserReferenceLabel(task.owner))}</span>` : ""}
-              <div class="profile-task-actions">
-                ${isDone ? `
-                  <button class="ghost-button" data-action="reopen-profile-task" data-id="${task.id}" data-value="${creatorId}">
-                    Reabrir
-                  </button>
-                ` : `
-                  <button class="ghost-button" data-action="complete-profile-task" data-id="${task.id}" data-value="${creatorId}">
-                    Hecho
-                  </button>
-                `}
-              </div>
+	              <div class="profile-task-actions">
+	                ${canEditCreator ? (isDone ? `
+	                  <button class="ghost-button" data-action="reopen-profile-task" data-id="${task.id}" data-value="${creatorId}">
+	                    Reabrir
+	                  </button>
+	                ` : `
+	                  <button class="ghost-button" data-action="complete-profile-task" data-id="${task.id}" data-value="${creatorId}">
+	                    Hecho
+	                  </button>
+	                `) : ""}
+	              </div>
               ${isDone && task.completedAt ? `<span class="dim" style="font-size:0.72rem;">${escapeHtml(task.completedAt)}</span>` : ""}
             </div>
           </article>
@@ -13097,6 +13294,7 @@
 
       /* ─── Helper: tarjeta compacta para el tab "Ahora mismo" ─── */
       function renderNowTaskCard(creatorId, task, isHero = false) {
+        const canEditCreator = canPerformEntityAction("creator", "edit", creatorId);
         const priorityColors = {
           critical: { border: "rgba(138, 46, 31, 0.32)", bg: "rgba(138, 46, 31, 0.07)", dot: "#8A2E1F" },
           high:     { border: "rgba(168, 118, 45, 0.26)",  bg: "rgba(168, 118, 45, 0.06)",  dot: "#A8762D" },
@@ -13119,19 +13317,19 @@
                 ${task.owner ? `<span class="now-meta">${escapeHtml(getUserReferenceLabel(task.owner))}</span>` : ""}
                 ${task.due ? `<span class="now-meta">${escapeHtml(task.due)}</span>` : ""}
                 <div style="flex:1 1 auto;min-width:0;"></div>
-                <button class="primary-button" data-action="complete-profile-task" data-id="${task.id}" data-value="${creatorId}">
-                  Marcar como hecho
-                </button>
-              </div>
+	                ${canEditCreator ? `<button class="primary-button" data-action="complete-profile-task" data-id="${task.id}" data-value="${creatorId}">
+	                  Marcar como hecho
+	                </button>` : ""}
+	              </div>
             </div>
           `;
         }
 
         return `
           <div class="now-task-row" data-task-id="${task.id}">
-            <button class="now-check-btn" data-action="complete-profile-task" data-id="${task.id}" data-value="${creatorId}" aria-label="Completar: ${escapeHtml(task.title)}">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
-            </button>
+	            ${canEditCreator ? `<button class="now-check-btn" data-action="complete-profile-task" data-id="${task.id}" data-value="${creatorId}" aria-label="Completar: ${escapeHtml(task.title)}">
+	              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
+	            </button>` : ""}
             <div class="now-task-info">
               <span class="now-task-title">${escapeHtml(task.title)}</span>
               ${task.owner || task.due ? `<span class="now-task-meta">${[task.owner ? getUserReferenceLabel(task.owner) : "", task.due].filter(Boolean).map(escapeHtml).join(" · ")}</span>` : ""}
@@ -13344,7 +13542,10 @@
 
       function renderProfileSummaryTab(creator) {
         const progress = getProfileProgress(creator);
-        const metric = getCreatorLatestMetric(creator.id);
+        const metric = canAccessModule("analitica", "read", { creatorId: creator.id, creatorName: creator.name })
+          ? getCreatorLatestMetric(creator.id)
+          : null;
+        const canEditCreator = canPerformEntityAction("creator", "edit", creator.id);
         const nowData = getProfileNowData(creator);
         const notes = ensureArray(creator.ops.notes).slice(0, 4);
 
@@ -13412,7 +13613,7 @@
                   <h3>Atajo operativo</h3>
                   <p>Lo que mas te conviene tocar antes de seguir navegando.</p>
                 </div>
-                <button class="ghost-button" data-action="toggle-creator-composer" data-value="task">Anadir tarea</button>
+	                ${canEditCreator ? `<button class="ghost-button" data-action="toggle-creator-composer" data-value="task">Anadir tarea</button>` : ""}
               </div>
               ${nowData.nextStep
                 ? renderProfileTaskCard(creator.id, nowData.nextStep)
@@ -13500,6 +13701,7 @@
         const system = creator.ops.system || {};
         const notes = ensureArray(creator.ops.notes).filter((note) => note.area === "system").slice(0, 3);
         const infraItems = DATA.accountInfrastructure.filter((item) => item.creatorId === creator.id);
+        const canEditCreator = canPerformEntityAction("creator", "edit", creator.id);
 
         return `
           <form class="profile-panel" data-profile-form="system" data-creator-id="${creator.id}">
@@ -13508,7 +13710,7 @@
                 <h3>Sistema y accesos</h3>
                 <p>Referencia rapida de plataformas, usuarios y control operativo.</p>
               </div>
-              <button type="submit" class="primary-button">Guardar bloque</button>
+              ${canEditCreator ? `<button type="submit" class="primary-button">Guardar bloque</button>` : ""}
             </div>
             <div class="field-grid">
               ${renderInputField("Canal principal", "canalPrincipal", system.canalPrincipal || "")}
@@ -13598,8 +13800,14 @@
       }
 
       function renderProfileMetricsTab(creator) {
-        const metric = getCreatorLatestMetric(creator.id);
-        const contentSummary = getCreatorContentSummary(creator.id);
+        const creatorContext = { creatorId: creator.id, creatorName: creator.name };
+        const canReadMetrics = canAccessModule("analitica", "read", creatorContext);
+        const canReadContent = canAccessModule("contenido", "read", creatorContext);
+        const canEditCreator = canPerformEntityAction("creator", "edit", creator.id);
+        const metric = canReadMetrics ? getCreatorLatestMetric(creator.id) : null;
+        const contentSummary = canReadContent
+          ? getCreatorContentSummary(creator.id)
+          : { winners: 0, losers: 0, pendingRecording: 0, pendingPublishing: 0, failedPosts: 0 };
         const metricsExtra = creator.ops.metrics || {};
 
         return `
@@ -13648,7 +13856,7 @@
                 <h3>Contexto extra de metricas</h3>
                 <p>Datos de trafico o rendimiento que no salen de la lectura automatica.</p>
               </div>
-              <button type="submit" class="primary-button">Guardar bloque</button>
+              ${canEditCreator ? `<button type="submit" class="primary-button">Guardar bloque</button>` : ""}
             </div>
             <div class="field-grid">
               ${renderInputField("Trafico", "trafico", metricsExtra.trafico || "", { full: true })}
@@ -13685,6 +13893,7 @@
 
       function renderProfileRetentionTab(creator) {
         const retention = creator.ops.retention || {};
+        const canEditCreator = canPerformEntityAction("creator", "edit", creator.id);
 
         return `
           <div class="profile-grid-3">
@@ -13710,7 +13919,7 @@
                 <h3>Retencion y seguimiento</h3>
 	                <p>Fricciones, limites y siguiente accion para mantener estable la creadora.</p>
               </div>
-              <button type="submit" class="primary-button">Guardar bloque</button>
+              ${canEditCreator ? `<button type="submit" class="primary-button">Guardar bloque</button>` : ""}
             </div>
             <div class="field-grid">
               ${renderInputField("Ultimo seguimiento", "ultimoCheckIn", retention.ultimoCheckIn || "", { type: "date" })}
@@ -13739,6 +13948,7 @@
       function renderProfileHistoryTab(creator) {
         const completed = sortProfileTasks(getProfileTasks(creator).filter((task) => isProfileTaskDone(task)));
         const notes = ensureArray(creator.ops.notes);
+        const canEditCreator = canPerformEntityAction("creator", "edit", creator.id);
 
         return `
           <div class="profile-grid-2">
@@ -13755,11 +13965,11 @@
                   <article class="profile-history-item">
                     <strong>${escapeHtml(task.title)}</strong>
                     <p>${escapeHtml(PROFILE_AREA_LABELS[task.area] || "Bloque")} · ${escapeHtml(PROFILE_PHASE_LABELS[task.phase] || task.phase)}</p>
-                    <p>${escapeHtml(task.completedAt || "Sin fecha")} · ${escapeHtml(TASK_PRIORITY_LABELS[task.priority])}${task.owner ? ` · ${escapeHtml(getUserReferenceLabel(task.owner))}` : ""}</p>
-                    <div class="profile-inline-actions" style="margin-top:10px;">
-                      <button class="ghost-button" data-action="reopen-profile-task" data-id="${task.id}" data-value="${creator.id}">Volver a pendiente</button>
-                    </div>
-                  </article>
+	                    <p>${escapeHtml(task.completedAt || "Sin fecha")} · ${escapeHtml(TASK_PRIORITY_LABELS[task.priority])}${task.owner ? ` · ${escapeHtml(getUserReferenceLabel(task.owner))}` : ""}</p>
+	                    ${canEditCreator ? `<div class="profile-inline-actions" style="margin-top:10px;">
+	                      <button class="ghost-button" data-action="reopen-profile-task" data-id="${task.id}" data-value="${creator.id}">Volver a pendiente</button>
+	                    </div>` : ""}
+	                  </article>
                 `).join("") : renderEmptyState("Sin historial todavia", "Las tareas completadas apareceran aqui para no estorbar en la vista principal.", true)}
               </div>
             </article>
@@ -13786,6 +13996,7 @@
       function renderProfileTabContent(creator) {
         const marketing = creator.ops.marketing || {};
         const systemNotes = creator.ops.system?.notasOperativas || "";
+        const canEditCreator = canPerformEntityAction("creator", "edit", creator.id);
 
         if (state.creatorTab === "summary") {
           return renderProfileSummaryTab(creator);
@@ -13800,6 +14011,9 @@
         }
 
         if (state.creatorTab === "content") {
+          if (!canAccessModule("contenido", "read", { creatorId: creator.id, creatorName: creator.name })) {
+            return `<article class="profile-panel">${renderEmptyState("Sin acceso a contenido", "Tu rol no tiene permiso para ver el bloque de contenido de esta creadora.", true)}</article>`;
+          }
           const summary = getCreatorContentSummary(creator.id);
           return `
             <div class="profile-grid-4">
@@ -13839,7 +14053,7 @@
                   <h3>Contexto de marketing</h3>
 	                  <p>Origen de trafico, promos y contexto de captacion de la creadora.</p>
                 </div>
-                <button type="submit" class="primary-button">Guardar bloque</button>
+	                ${canEditCreator ? `<button type="submit" class="primary-button">Guardar bloque</button>` : ""}
               </div>
               <div class="field-grid">
                 ${renderInputField("Origen de trafico", "origenTrafico", marketing.origenTrafico || "")}
@@ -13897,12 +14111,19 @@
       function renderCreatorDrawer() {
         const creator = getCreatorById(state.activeCreatorId);
         if (!creator) return "";
+        if (!canPerformEntityAction("creator", "read", creator.id)) return "";
+        const canEditCreator = canPerformEntityAction("creator", "edit", creator.id);
 
         const progress = getProfileProgress(creator);
         const nowData = getProfileNowData(creator);
-        const metric = getCreatorLatestMetric(creator.id);
+        const creatorContext = { creatorId: creator.id, creatorName: creator.name };
+        const metric = canAccessModule("analitica", "read", creatorContext)
+          ? getCreatorLatestMetric(creator.id)
+          : null;
         const blocks = getCreatorBlocks(creator);
-        const contentSummary = getCreatorContentSummary(creator.id);
+        const contentSummary = canAccessModule("contenido", "read", creatorContext)
+          ? getCreatorContentSummary(creator.id)
+          : { pieces: [], queue: [], winners: 0, scheduled: 0, pending: 0 };
 
         return `
           <div class="drawer-backdrop" data-action="close-modal">
@@ -13959,9 +14180,9 @@
                     </div>
                     <div class="profile-subtitle">Responsable ${escapeHtml(getUserReferenceLabel(creator.accountManager))} · ${escapeHtml(creator.handle || "Sin usuario")} · ${escapeHtml(creator.updated || "Sin actualizar")}</div>
                   </div>
-                  <div class="profile-header-actions">
-                    <button class="ghost-button" data-action="toggle-creator-composer" data-value="task">+ Tarea</button>
-                    <button class="ghost-button" data-action="toggle-creator-composer" data-value="note">+ Nota</button>
+	                  <div class="profile-header-actions">
+	                    ${canEditCreator ? `<button class="ghost-button" data-action="toggle-creator-composer" data-value="task">+ Tarea</button>` : ""}
+	                    ${canEditCreator ? `<button class="ghost-button" data-action="toggle-creator-composer" data-value="note">+ Nota</button>` : ""}
 	                    <button class="icon-button" data-action="close-modal" aria-label="Cerrar ficha de creadora">${iconSlot("close")}</button>
                   </div>
                 </header>
@@ -14627,10 +14848,11 @@
       }
 
       function ensureRolePermissionEntries(roleId) {
+        const role = getAppRoleById(roleId);
         Object.keys(RBAC_MODULE_LABELS).forEach((moduleKey) => {
           const existing = DATA.rolePermissions.find((permission) => permission.roleId === roleId && permission.moduleKey === moduleKey);
           if (!existing) {
-            DATA.rolePermissions.push(normalizeRolePermission({ roleId, moduleKey }));
+            DATA.rolePermissions.push(normalizeRolePermission(getRolePresetPermissionDefaults(role || { id: roleId }, moduleKey)));
           }
         });
       }
@@ -15353,6 +15575,7 @@
         const schema = getEntitySchema(entity);
 
         if (!schema?.save) return false;
+        if (!canSubmitEntityForm(entity, formData, id)) return false;
 
         const errors = validateSchemaForm(schema, formData);
         if (errors.length) {
@@ -15849,6 +16072,56 @@
         }
       }
 
+      function getFormCreatorPermissionContext(entity, formData) {
+        const directCreatorId = String(formData.get("creatorId") || formData.get("assignedCreatorId") || "").trim();
+        if (directCreatorId) {
+          const creator = getCreatorById(directCreatorId);
+          return { creatorId: directCreatorId, creatorName: creator?.name || "" };
+        }
+
+        const fanId = String(formData.get("fanId") || "").trim();
+        if (fanId) {
+          const fan = getEntityItem("fanProfile", fanId);
+          return { creatorId: fan?.creatorId || "", creatorName: fan?.creatorName || "" };
+        }
+
+        return { creatorId: "", creatorName: "" };
+      }
+
+      function shouldRequireCreatorScopeOnCreate(entity) {
+        return [
+          "contract",
+          "passwordCredential",
+          "accountInfrastructure",
+          "contentDoc",
+          "contentStyle",
+          "contentVehicle",
+          "deliveryFlow",
+          "chatChannel",
+          "eosReport",
+          "chatMonitoring",
+          "chatApproval",
+          "fanProfile",
+          "fanFlow",
+          "gfStage",
+          "shift"
+        ].includes(entity);
+      }
+
+      function canSubmitEntityForm(entity, formData, id = "") {
+        const intent = id ? "edit" : "create";
+        if (!canPerformEntityAction(entity, intent, id)) return false;
+        if (id || !shouldRequireCreatorScopeOnCreate(entity)) return true;
+
+        const moduleKey = getModuleForEntity(entity);
+        if (!moduleKey) return true;
+        const context = getFormCreatorPermissionContext(entity, formData);
+        if (context.creatorId || context.creatorName) {
+          return canAccessModule(moduleKey, "create", context);
+        }
+        return hasGlobalModuleRecordScope(moduleKey);
+      }
+
       function updateInlineEntityField(entity, id, field, value) {
         if (!canPerformEntityAction(entity, "edit", id)) return false;
 
@@ -16128,10 +16401,12 @@
           governance: ["governanceEntry", "Crear entrada"]
         };
 
-        const action = actionMap[state.view];
-        if (!action) return null;
-
-        const [entity, label] = action;
+	        const action = actionMap[state.view];
+	        if (!action) return null;
+	
+	        const [entity, label] = state.view === "chatting" && !hasGlobalModuleRecordScope("chatting")
+            ? ["eosReport", "Crear EOS"]
+            : action;
         if (!canPerformEntityAction(entity, "create")) return null;
 
         return { entity, label };
@@ -16160,7 +16435,11 @@
         const stats = getDashboardStats();
         const priorityActions = getPriorityActions();
         const primaryAction = priorityActions[0];
-        const isEmptyWorkspace = !DATA.leads.length && !DATA.creators.length && !DATA.tasks.length && !DATA.contentPieces.length && !DATA.sops.length;
+        const isEmptyWorkspace = !getVisibleLeads().length
+          && !getVisibleCreatorsForModule("perfiles").length
+          && !getVisibleTasks().length
+          && !DATA.contentPieces.filter((piece) => canAccessCreatorScopedItem("contenido", piece, "read")).length
+          && !DATA.sops.filter((sop) => canPerformEntityAction("sop", "read", sop.id)).length;
 
         return `
           <section class="hero-banner">
@@ -16178,17 +16457,17 @@
                     ? "El dashboard prioriza lo que mas impacto tiene ahora mismo para que el equipo actue sin perder tiempo entre pantallas."
                     : "No hay urgencias abiertas en el sistema."}
               </p>
-              <div class="hero-actions">
-                ${isEmptyWorkspace ? `
-                  <button class="primary-button" data-action="open-form" data-value="lead" data-mode="create">Agregar lead</button>
-                  <button class="ghost-button" data-action="open-form" data-value="task" data-mode="create">Crear tarea</button>
-                ` : `
-                  <button class="primary-button" data-action="set-view" data-value="${primaryAction ? primaryAction.view : "tasks"}">
-                    ${primaryAction ? "Abrir foco inmediato" : "Abrir agenda del dia"}
-                  </button>
-                  <button class="ghost-button" data-action="set-view" data-value="scaling">Revisar capacidad operativa</button>
-                `}
-              </div>
+	              <div class="hero-actions">
+	                ${isEmptyWorkspace ? `
+	                  ${renderEntityCreateButton("lead", "Agregar lead")}
+	                  ${renderEntityCreateButton("task", "Crear tarea", "ghost-button")}
+	                ` : `
+	                  ${canView(primaryAction ? primaryAction.view : "tasks") ? `<button class="primary-button" data-action="set-view" data-value="${primaryAction ? primaryAction.view : "tasks"}">
+	                    ${primaryAction ? "Abrir foco inmediato" : "Abrir agenda del dia"}
+	                  </button>` : ""}
+	                  ${canView("scaling") ? `<button class="ghost-button" data-action="set-view" data-value="scaling">Revisar capacidad operativa</button>` : ""}
+	                `}
+	              </div>
               ${primaryAction && !isEmptyWorkspace ? `
                 <div class="hero-primary">
                   <span class="hero-primary-label">Siguiente accion recomendada</span>
@@ -16375,8 +16654,8 @@
 
       function renderDashboard() {
         const today = todayIsoLocal();
-        const leads = (Array.isArray(DATA.leads) ? DATA.leads : []).filter((lead) => !isProspectStatus(lead.status));
-        const creators = Array.isArray(DATA.creators) ? DATA.creators : [];
+        const leads = getVisibleLeads().filter((lead) => !isProspectStatus(lead.status));
+        const creators = getVisibleCreatorsForModule("perfiles");
 
         const dmTarget = 30;
         const dmsToday = leads.filter((lead) => isSameLocalDate(getLeadDmDate(lead), today)).length;
@@ -16535,7 +16814,7 @@
               <div class="muted" style="font-size:13px;margin-bottom:12px;">
                 Aun no hay calls registradas. Cuando un lead avance a <em>Llamada 1/2</em> o <em>OK verbal</em>, aparecera aqui.
               </div>
-              <button class="primary-button" data-action="open-form" data-value="lead" data-mode="create">Agendar call con un lead</button>
+	              ${canPerformEntityAction("lead", "create") ? `<button class="primary-button" data-action="open-form" data-value="lead" data-mode="create">Agendar call con un lead</button>` : ""}
             ` : `
               <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px;">
                 ${callLeads.map((l) => `
@@ -16560,9 +16839,10 @@
                 <button class="ghost-button" data-action="set-view" data-value="creators">Ver todas</button>
               </header>
               <div class="grid-2" style="gap:12px;">
-                ${active.map((c) => {
-                  const m = metricsMap[c.id] || {};
-                  const rev = (typeof m.revenue === "number") ? currency(m.revenue) : "-";
+	                ${active.map((c) => {
+	                  const canReadMetrics = canAccessModule("analitica", "read", { creatorId: c.id, creatorName: c.name });
+	                  const m = canReadMetrics ? (metricsMap.get(c.id) || {}) : {};
+	                  const rev = (typeof m.revenue === "number") ? currency(m.revenue) : "-";
                   return `
                     <div class="card" style="padding:12px;">
                       <strong>${escapeHtml(c.name || "Creadora")}</strong>
@@ -16611,7 +16891,10 @@
         const stats = getDashboardStats();
         const snapshot = getRevenueSnapshot();
         const closeReadyLeads = [...stats.closeReady].sort((a, b) => b.revenue - a.revenue).slice(0, 4);
-        const metrics = getLatestMetricsByCreator().sort((a, b) => b.revenue - a.revenue);
+        const visibleBlocks = getVisibleOnboardingBlocks();
+        const metrics = getLatestMetricsByCreator()
+          .filter((metric) => canAccessCreatorScopedItem("analitica", metric, "read"))
+          .sort((a, b) => b.revenue - a.revenue);
         const topCreators = metrics.slice(0, 3);
         const priorityActions = getPriorityActions();
 
@@ -16696,11 +16979,11 @@
                 </div>
                 <div class="card-body">
                   <div class="subsection">
-                    <div class="subsection-head">
-                      <strong>Bloqueos de alta inicial</strong>
-                      <span>${DATA.onboardingBlocks.length} abiertos</span>
-                    </div>
-                    ${DATA.onboardingBlocks.length ? DATA.onboardingBlocks.map((item) => `
+	                    <div class="subsection-head">
+	                      <strong>Bloqueos de alta inicial</strong>
+	                      <span>${visibleBlocks.length} abiertos</span>
+	                    </div>
+	                    ${visibleBlocks.length ? visibleBlocks.map((item) => `
                       <div class="kanban-card">
                         <strong>${escapeHtml(item.title)}</strong>
                         <p>${escapeHtml(item.creatorName)} · Dia ${item.day} · ${escapeHtml(item.owner)}</p>
@@ -16799,7 +17082,7 @@
 
       function filterLeads() {
         const query = state.leadsSearch.trim().toLowerCase();
-        const base = DATA.leads.filter((lead) => !isProspectStatus(lead.status));
+        const base = getVisibleLeads().filter((lead) => !isProspectStatus(lead.status));
         if (!query) return base;
 
         return base.filter((lead) =>
@@ -16830,7 +17113,7 @@
       function filterProspects() {
         const query = (state.prospectsSearch || "").trim().toLowerCase();
         const tab = state.prospectsTab || "active";
-        let base = DATA.leads.filter((lead) => isProspectStatus(lead.status));
+        let base = getVisibleLeads().filter((lead) => isProspectStatus(lead.status));
         if (tab === "active") {
           base = base.filter((lead) => lead.status !== "prospect_archived");
         } else if (tab === "archived") {
@@ -16858,7 +17141,7 @@
       function renderProspects() {
         const prospects = filterProspects();
         const tab = state.prospectsTab || "active";
-        const allProspects = DATA.leads.filter((lead) => isProspectStatus(lead.status));
+        const allProspects = getVisibleLeads().filter((lead) => isProspectStatus(lead.status));
         const pendingCount = allProspects.filter((lead) => lead.status === "prospect").length;
         const sentCount = allProspects.filter((lead) => lead.status === "prospect_sent").length;
         const archivedCount = allProspects.filter((lead) => lead.status === "prospect_archived").length;
@@ -16867,7 +17150,9 @@
           <section class="section">
             ${renderPageHeader("Prospects", "", {
               eyebrow: "Prospects",
-              actions: `<button class="primary-button" data-action="open-form" data-value="lead" data-mode="new" title="Registra un prospect con lo minimo (handle, nicho, pais). Cuando envies el MD, marcalo como enviado.">+ Nuevo prospect</button>`,
+              actions: canPerformEntityAction("lead", "create")
+                ? `<button class="primary-button" data-action="open-form" data-value="lead" data-mode="new" title="Registra un prospect con lo minimo (handle, nicho, pais). Cuando envies el MD, marcalo como enviado.">+ Nuevo prospect</button>`
+                : "",
               metrics: [
                 { label: "Pendientes MD", value: pendingCount },
                 { label: "MD enviado", value: sentCount },
@@ -17116,7 +17401,7 @@
 
       function filterCreators() {
         const query = state.creatorsSearch.trim().toLowerCase();
-        return DATA.creators.filter((creator) => {
+        return getVisibleCreatorsForModule("perfiles").filter((creator) => {
           const matchSearch = !query || [creator.name, creator.handle, creator.niche, creator.accountManager, getUserReferenceLabel(creator.accountManager, "")].some((field) =>
             String(field || "").toLowerCase().includes(query)
           );
@@ -17126,21 +17411,21 @@
       }
 
       function renderCreators() {
-        const allCreators = Array.isArray(DATA.creators) ? DATA.creators : [];
+        const allCreators = getVisibleCreatorsForModule("perfiles");
         if (allCreators.length === 0 && !state.advancedMode) {
           return `
             <section class="section">
               <header class="page-header"><div><span class="eyebrow">Creadoras</span><h2 style="margin:4px 0;">Aun no hay creadoras firmadas</h2></div></header>
               <article class="card" style="padding:24px;max-width:640px;">
                 <p style="margin-top:0;">Cuando firmes a tu primera creadora, registrala aqui con su nombre, nicho y etapa (alta inicial / activa). El resto de campos los rellenas a medida que avanza el onboarding.</p>
-                <button class="primary-button" data-action="open-form" data-value="creator" data-mode="new">Crear primera creadora</button>
+                ${renderEntityCreateButton("creator", "Crear primera creadora")}
               </article>
             </section>
           `;
         }
-        const creators = filterCreators();
-        const stages = ["all", "onboarding", "active", "paused", "churned"];
-        const metricsMap = getMetricsMap();
+	        const creators = filterCreators();
+	        const stages = ["all", "onboarding", "active", "paused", "churned"];
+	        const metricsMap = getMetricsMap();
         const atRiskCount = creators.filter((creator) => creator.retention === "at_risk").length;
         const onboardingCount = creators.filter((creator) => creator.stage === "onboarding").length;
 
@@ -17171,8 +17456,10 @@
             </div>
             ${creators.length ? `
               <div class="creator-grid">
-                ${creators.map((creator) => {
-                  const metric = metricsMap.get(creator.id);
+	                ${creators.map((creator) => {
+	                  const metric = canAccessModule("analitica", "read", { creatorId: creator.id, creatorName: creator.name })
+                      ? metricsMap.get(creator.id)
+                      : null;
                   const blocker = DATA.onboardingBlocks.find((item) => item.creatorName === creator.name);
                   const progress = getProfileProgress(creator);
                   return `
@@ -17241,7 +17528,7 @@
       }
 
       function filterContentPieces() {
-        return DATA.contentPieces.filter((piece) => {
+        return DATA.contentPieces.filter((piece) => canAccessCreatorScopedItem("contenido", piece, "read")).filter((piece) => {
           const creatorMatch = state.contentCreator === "all" || piece.creatorId === state.contentCreator;
           const typeMatch = state.contentType === "all" || piece.type === state.contentType;
           return creatorMatch && typeMatch;
@@ -17249,19 +17536,29 @@
       }
 
       function renderContent() {
-        const creators = DATA.creators.filter((creator) => ["active", "onboarding"].includes(creator.stage));
+        const creators = getVisibleCreatorsForModule("contenido").filter((creator) => ["active", "onboarding"].includes(creator.stage));
         const pieces = filterContentPieces();
         const statuses = ["idea", "scripted", "recorded", "edited", "scheduled", "posted", "winner", "loser"];
         const byStatus = Object.fromEntries(statuses.map((status) => [status, pieces.filter((piece) => piece.status === status)]));
-        const filteredQueue = DATA.queue.filter((item) => state.contentCreator === "all" || item.creatorId === state.contentCreator);
+        const filteredQueue = DATA.queue
+          .filter((item) => canAccessCreatorScopedItem("contenido", item, "read"))
+          .filter((item) => state.contentCreator === "all" || item.creatorId === state.contentCreator);
         const backlogCount = pieces.filter((piece) => ["idea", "scripted"].includes(piece.status)).length;
         const scheduledCount = filteredQueue.filter((item) => item.status === "scheduled").length;
         const winners = pieces.filter((piece) => piece.status === "winner").length;
         const failedPosts = filteredQueue.filter((item) => item.status === "failed").length;
-        const docs = DATA.contentDocs.filter((item) => state.contentCreator === "all" || item.creatorId === state.contentCreator);
-        const styles = DATA.contentStyles.filter((item) => state.contentCreator === "all" || item.creatorId === state.contentCreator);
-        const vehicles = DATA.contentVehicles.filter((item) => state.contentCreator === "all" || item.creatorId === state.contentCreator);
-        const delivery = DATA.deliveryFlow.filter((item) => state.contentCreator === "all" || item.creatorId === state.contentCreator);
+        const docs = DATA.contentDocs
+          .filter((item) => canAccessCreatorScopedItem("contenido", item, "read"))
+          .filter((item) => state.contentCreator === "all" || item.creatorId === state.contentCreator);
+        const styles = DATA.contentStyles
+          .filter((item) => canAccessCreatorScopedItem("contenido", item, "read"))
+          .filter((item) => state.contentCreator === "all" || item.creatorId === state.contentCreator);
+        const vehicles = DATA.contentVehicles
+          .filter((item) => canAccessCreatorScopedItem("contenido", item, "read"))
+          .filter((item) => state.contentCreator === "all" || item.creatorId === state.contentCreator);
+        const delivery = DATA.deliveryFlow
+          .filter((item) => canAccessCreatorScopedItem("contenido", item, "read"))
+          .filter((item) => state.contentCreator === "all" || item.creatorId === state.contentCreator);
         const pendingDelivery = delivery.filter((item) => !["subido_final", "trackeando"].includes(item.status)).length;
         const deliveryTracked = delivery.filter((item) => item.status === "trackeando").length;
         const topStyles = [...styles].sort((a, b) => String(b.performance || "").localeCompare(String(a.performance || ""))).slice(0, 5);
@@ -17523,7 +17820,7 @@
       function filterTasks() {
         const query = state.taskSearch.trim().toLowerCase();
 
-        return sortTasksByUrgency(DATA.tasks.filter((task) => {
+        return sortTasksByUrgency(getVisibleTasks().filter((task) => {
           const ownerRefs = getTaskOwnerRefs(task);
           const ownerTokens = ownerRefs.flatMap((owner) => getUserReferenceSearchTokens(owner));
           const matchSearch = !query || [task.title, task.description, task.owner, ...ownerRefs, ...ownerTokens, task.type, ...(task.tags || [])].some((field) =>
@@ -17607,11 +17904,12 @@
 
       function renderTasks() {
         const tasks = filterTasks();
-        const totalActive = DATA.tasks.filter((task) => !["done", "cancelled"].includes(task.status)).length;
-        const totalCritical = DATA.tasks.filter((task) => task.priority === "critical" && !["done", "cancelled"].includes(task.status)).length;
-        const totalDone = DATA.tasks.filter((task) => task.status === "done").length;
-        const totalBlocked = DATA.tasks.filter((task) => task.status === "blocked").length;
-        const totalOverdue = DATA.tasks.filter((task) => isTaskOverdue(task)).length;
+        const visibleTasks = getVisibleTasks();
+        const totalActive = visibleTasks.filter((task) => !["done", "cancelled"].includes(task.status)).length;
+        const totalCritical = visibleTasks.filter((task) => task.priority === "critical" && !["done", "cancelled"].includes(task.status)).length;
+        const totalDone = visibleTasks.filter((task) => task.status === "done").length;
+        const totalBlocked = visibleTasks.filter((task) => task.status === "blocked").length;
+        const totalOverdue = visibleTasks.filter((task) => isTaskOverdue(task)).length;
 
         return `
           <section class="section">
@@ -17854,9 +18152,10 @@
       }
 
       function getAnalyticsData() {
+        const visibleMetrics = DATA.metrics.filter((metric) => canAccessCreatorScopedItem("analitica", metric, "read"));
         const selectedMetrics = state.analyticsCreator === "all"
-          ? DATA.metrics
-          : DATA.metrics.filter((metric) => metric.creatorId === state.analyticsCreator);
+          ? visibleMetrics
+          : visibleMetrics.filter((metric) => metric.creatorId === state.analyticsCreator);
 
         const periods = [
           ["Jan", "Ene"],
@@ -17873,7 +18172,9 @@
           };
         });
 
-        const latestMetrics = getLatestMetricsByCreator().sort((a, b) => b.revenue - a.revenue);
+        const latestMetrics = getLatestMetricsByCreator()
+          .filter((metric) => canAccessCreatorScopedItem("analitica", metric, "read"))
+          .sort((a, b) => b.revenue - a.revenue);
         const latestSelected = state.analyticsCreator === "all"
           ? {
               creatorName: "Equipo",
@@ -17886,7 +18187,7 @@
                 ? latestMetrics.reduce((sum, item) => sum + item.chatRatio, 0) / latestMetrics.length
                 : 0
             }
-          : DATA.metrics.filter((metric) => metric.creatorId === state.analyticsCreator).slice(-1)[0]
+          : visibleMetrics.filter((metric) => metric.creatorId === state.analyticsCreator).slice(-1)[0]
             || {
               creatorName: "Sin datos",
               revenue: 0,
@@ -17902,6 +18203,7 @@
 
       function renderAnalytics() {
         const { timeSeries, latestMetrics, latestSelected } = getAnalyticsData();
+        const analyticsCreators = getVisibleCreatorsForModule("analitica").filter((creator) => creator.stage === "active");
         const totalRevenue = latestMetrics.reduce((sum, item) => sum + item.revenue, 0);
         const totalMargin = latestMetrics.reduce((sum, item) => sum + item.margin, 0);
         const totalSubs = latestMetrics.reduce((sum, item) => sum + item.subs, 0);
@@ -17929,7 +18231,7 @@
             <div class="filter-row">
               <div class="filter-group" role="group" aria-label="Filtrar analitica por creadora">
                 <button class="filter-button ${state.analyticsCreator === "all" ? "active" : ""}" data-action="set-analytics-creator" data-value="all" aria-pressed="${state.analyticsCreator === "all"}">Equipo</button>
-                ${DATA.creators.filter((creator) => creator.stage === "active").map((creator) => `
+                ${analyticsCreators.map((creator) => `
                   <button class="filter-button ${state.analyticsCreator === creator.id ? "active" : ""}" data-action="set-analytics-creator" data-value="${creator.id}" aria-pressed="${state.analyticsCreator === creator.id}">
                     ${escapeHtml(creator.name)}
                   </button>
@@ -18062,29 +18364,36 @@
       function getChatStats() {
         const activeChatters = DATA.chatAgents.filter((agent) => agent.status === "activo").length;
         const pendingTrainings = DATA.chatTrainings.filter((training) => training.status !== "completado").length;
-        const eosPendingOrRecent = DATA.eosReports.filter((report) => !report.submittedAt || isRecentISODate(report.shiftDate, 7)).length;
-        const pendingApprovals = DATA.chatApprovals.filter((approval) => approval.status === "pendiente").length;
-        const monitoringIssues = DATA.chatMonitoring.filter((review) => review.status !== "correcto" || Number(review.score) < 80).length;
+        const visibleReports = DATA.eosReports.filter((report) => canAccessCreatorScopedItem("chatting", report, "read"));
+        const visibleApprovals = DATA.chatApprovals.filter((approval) => canAccessCreatorScopedItem("chatting", approval, "read"));
+        const visibleMonitoring = DATA.chatMonitoring.filter((review) => canAccessCreatorScopedItem("chatting", review, "read"));
+        const eosPendingOrRecent = visibleReports.filter((report) => !report.submittedAt || isRecentISODate(report.shiftDate, 7)).length;
+        const pendingApprovals = visibleApprovals.filter((approval) => approval.status === "pendiente").length;
+        const monitoringIssues = visibleMonitoring.filter((review) => review.status !== "correcto" || Number(review.score) < 80).length;
 
         return { activeChatters, pendingTrainings, eosPendingOrRecent, pendingApprovals, monitoringIssues };
       }
 
       function getChatPerformanceSnapshot() {
-        const activeMetrics = DATA.metrics.filter((metric) => metric.creatorId);
+        const visibleReports = DATA.eosReports.filter((report) => canAccessCreatorScopedItem("chatting", report, "read"));
+        const visibleMonitoring = DATA.chatMonitoring.filter((review) => canAccessCreatorScopedItem("chatting", review, "read"));
+        const visibleApprovals = DATA.chatApprovals.filter((approval) => canAccessCreatorScopedItem("chatting", approval, "read"));
+        const visibleFans = DATA.fanProfiles.filter((fan) => canAccessCreatorScopedItem("chatting", fan, "read"));
+        const activeMetrics = DATA.metrics.filter((metric) => metric.creatorId && canAccessCreatorScopedItem("chatting", metric, "read"));
         const chattingRatio = activeMetrics.length
           ? activeMetrics.reduce((sum, metric) => sum + Number(metric.chatRatio || 0), 0) / activeMetrics.length
           : 0;
-        const approvedApprovals = DATA.chatApprovals.filter((approval) => approval.status === "aprobado").length;
-        const totalApprovals = DATA.chatApprovals.length || 1;
+        const approvedApprovals = visibleApprovals.filter((approval) => approval.status === "aprobado").length;
+        const totalApprovals = visibleApprovals.length || 1;
         const unlockRatio = (approvedApprovals / totalApprovals) * 100;
-        const whales = DATA.fanProfiles.filter((fan) => fan.fanType === "whale").length;
-        const activeFans = DATA.fanProfiles.length || 1;
+        const whales = visibleFans.filter((fan) => fan.fanType === "whale").length;
+        const activeFans = visibleFans.length || 1;
         const goldenRatio = (whales / activeFans) * 100;
-        const eosWeek = DATA.eosReports.filter((report) => isRecentISODate(report.shiftDate, 7)).length;
+        const eosWeek = visibleReports.filter((report) => isRecentISODate(report.shiftDate, 7)).length;
 
         const chatterPerformance = DATA.chatAgents.map((agent) => {
-          const reports = DATA.eosReports.filter((report) => report.chatterId === agent.id);
-          const reviews = DATA.chatMonitoring.filter((review) => review.chatterId === agent.id);
+          const reports = visibleReports.filter((report) => report.chatterId === agent.id);
+          const reviews = visibleMonitoring.filter((review) => review.chatterId === agent.id);
           const avgScore = reviews.length
             ? reviews.reduce((sum, review) => sum + Number(review.score || 0), 0) / reviews.length
             : 0;
@@ -18104,6 +18413,10 @@
 
       function getVisibleChatTabs() {
         const alwaysVisible = new Set(["summary", "channels", "fancrm"]);
+        const workerVisible = new Set(["summary", "channels", "eos", "fancrm", "shifts"]);
+        if (!hasGlobalModuleRecordScope("chatting")) {
+          return CHAT_TABS.filter(([key]) => workerVisible.has(key));
+        }
         const agents = Array.isArray(DATA.chatAgents) ? DATA.chatAgents : [];
         const hasChatters = agents.length > 0;
         if (state.advancedMode || hasChatters) return CHAT_TABS;
@@ -18124,23 +18437,20 @@
       }
 
       function renderChatEntityHeader(title, subtitle, entity, buttonLabel) {
-        const moduleKey = getModuleForEntity(entity);
-        const canCreate = moduleKey ? canAccessModule(moduleKey, "create") : true;
         return `
           <div class="card-header">
             <div>
               <h3>${escapeHtml(title)}</h3>
               ${subtitle ? `<span>${escapeHtml(subtitle)}</span>` : ""}
             </div>
-            ${canCreate ? `<button class="primary-button" data-action="open-form" data-value="${entity}" data-mode="create">${escapeHtml(buttonLabel)}</button>` : ""}
+            ${canPerformEntityAction(entity, "create") ? `<button class="primary-button" data-action="open-form" data-value="${entity}" data-mode="create">${escapeHtml(buttonLabel)}</button>` : ""}
           </div>
         `;
       }
 
       function renderChatTableActions(entity, id, extra = "", creatorContext = {}) {
-        const moduleKey = getModuleForEntity(entity);
-        const canEdit = moduleKey ? canAccessModule(moduleKey, "edit", creatorContext) : true;
-        const canDelete = moduleKey ? canAccessModule(moduleKey, "delete", creatorContext) : true;
+        const canEdit = canPerformEntityAction(entity, "edit", id);
+        const canDelete = canPerformEntityAction(entity, "delete", id);
         const schema = getEntitySchema(entity);
         const item = getEntityItem(entity, id);
         const canDuplicate = Boolean(schema?.supports?.duplicate && canPerformEntityAction(entity, "create"));
@@ -18165,16 +18475,21 @@
         const stats = getChatStats();
         const performance = getChatPerformanceSnapshot();
         const badReviews = DATA.chatMonitoring
+          .filter((review) => canAccessCreatorScopedItem("chatting", review, "read"))
           .filter((review) => review.status !== "correcto" || Number(review.score) < 80)
           .slice(0, 5);
         const pendingApprovals = DATA.chatApprovals
+          .filter((approval) => canAccessCreatorScopedItem("chatting", approval, "read"))
           .filter((approval) => approval.status === "pendiente")
           .slice(0, 5);
+        const canManageChatOps = hasGlobalModuleRecordScope("chatting");
         const quickActions = [
-          ["chatRole", "Crear rol", "Permisos y responsabilidad"],
-          ["chatChannel", "Crear canal", "Espacio operativo"],
-          ["chatAgent", "Crear chatter", "Alta de equipo"],
-          ["chatTraining", "Crear formacion", "Asignacion interna"],
+          ...(canManageChatOps ? [
+            ["chatRole", "Crear rol", "Permisos y responsabilidad"],
+            ["chatChannel", "Crear canal", "Espacio operativo"],
+            ["chatAgent", "Crear chatter", "Alta de equipo"],
+            ["chatTraining", "Crear formacion", "Asignacion interna"]
+          ] : []),
           ["eosReport", "Crear reporte EOS", "Cierre de turno"],
           ["chatApproval", "Crear aprobacion", "Solicitud interna"]
         ].filter(([entity]) => canPerformEntityAction(entity, "create"));
@@ -18449,7 +18764,7 @@
 
       function renderChatChannelsTab() {
         const channels = getFilteredChatChannels();
-        const totalSignals = DATA.chatChannels.reduce((acc, channel) => {
+        const totalSignals = channels.reduce((acc, channel) => {
           const signals = getChannelSignals(channel);
           acc.pendingChecklist += signals.checklistPending;
           acc.pendingApprovals += signals.pendingApprovals;
@@ -18464,10 +18779,10 @@
 	                <h3>Canales operativos</h3>
 	                <span>Centros internos por creadora, relevo, incidencias, aprobaciones, formacion y responsable</span>
               </div>
-              ${canPerformEntityAction("chatChannel", "create") ? `<button class="primary-button" data-action="open-form" data-value="chatChannel" data-mode="create">Nuevo canal</button>` : ""}
+	              ${hasGlobalModuleRecordScope("chatting") && canPerformEntityAction("chatChannel", "create") ? `<button class="primary-button" data-action="open-form" data-value="chatChannel" data-mode="create">Nuevo canal</button>` : ""}
             </div>
             <div class="grid-4" style="padding:18px 20px 0;">
-              ${renderStatCard("Canales", DATA.chatChannels.length, "espacios operativos", "chatting", "primary")}
+	              ${renderStatCard("Canales", channels.length, "espacios operativos", "chatting", "primary")}
 	              ${renderStatCard("Checklist pendiente", totalSignals.pendingChecklist, "checks abiertos", "tasks", totalSignals.pendingChecklist ? "warning" : "success")}
               ${renderStatCard("Aprobaciones pendientes", totalSignals.pendingApprovals, "decisiones abiertas", "check", totalSignals.pendingApprovals ? "warning" : "success")}
               ${renderStatCard("Incidencias", totalSignals.incidents, "monitoreo a revisar", "warning", totalSignals.incidents ? "danger" : "success")}
@@ -18485,7 +18800,7 @@
               <select id="channel-creator-filter" class="select" aria-label="Filtrar canales por creadora">
                 <option value="all" ${state.channelCreator === "all" ? "selected" : ""}>Todas las creadoras</option>
                 <option value="unassigned" ${state.channelCreator === "unassigned" ? "selected" : ""}>Sin creadora</option>
-                ${DATA.creators.map((creator) => `<option value="${escapeHtml(creator.id)}" ${state.channelCreator === creator.id ? "selected" : ""}>${escapeHtml(creator.name)}</option>`).join("")}
+	                ${getVisibleCreatorsForModule("chatting").map((creator) => `<option value="${escapeHtml(creator.id)}" ${state.channelCreator === creator.id ? "selected" : ""}>${escapeHtml(creator.name)}</option>`).join("")}
               </select>
             </div>
             ${channels.length ? `
@@ -18625,7 +18940,9 @@
       }
 
       function renderEosReportsTab() {
-        const reports = [...DATA.eosReports].sort((a, b) => String(b.shiftDate).localeCompare(String(a.shiftDate)));
+        const reports = DATA.eosReports
+          .filter((report) => canAccessCreatorScopedItem("chatting", report, "read"))
+          .sort((a, b) => String(b.shiftDate).localeCompare(String(a.shiftDate)));
         return `
           <article class="card">
             ${renderChatEntityHeader("Reportes EOS", "Cierres de turno limpios para relevo y seguimiento de ingresos", "eosReport", "Nuevo reporte EOS")}
@@ -18677,7 +18994,9 @@
       }
 
       function renderChatMonitoringTab() {
-        const reviews = [...DATA.chatMonitoring].sort((a, b) => Number(a.score) - Number(b.score));
+        const reviews = DATA.chatMonitoring
+          .filter((review) => canAccessCreatorScopedItem("chatting", review, "read"))
+          .sort((a, b) => Number(a.score) - Number(b.score));
         return `
           <article class="card">
             ${renderChatEntityHeader("Monitoreo de calidad", "Revisiones con puntuacion, estado y notas accionables", "chatMonitoring", "Nueva revision")}
@@ -18729,7 +19048,7 @@
       }
 
       function renderChatApprovalsTab() {
-        const approvals = [...DATA.chatApprovals].sort((a, b) => {
+        const approvals = DATA.chatApprovals.filter((approval) => canAccessCreatorScopedItem("chatting", approval, "read")).sort((a, b) => {
           if (a.status !== b.status) return a.status === "pendiente" ? -1 : 1;
           return String(b.requestedAt).localeCompare(String(a.requestedAt));
         });
@@ -18794,7 +19113,9 @@
 
       function renderChatFanCrmTab() {
         const query = state.fanSearch.trim().toLowerCase();
-        const fans = DATA.fanProfiles.filter((fan) => {
+        const visibleFanFlow = DATA.fanFlow.filter((item) => canAccessCreatorScopedItem("chatting", item, "read"));
+        const visibleGfStages = DATA.gfStages.filter((item) => canAccessCreatorScopedItem("chatting", item, "read"));
+        const fans = DATA.fanProfiles.filter((fan) => canAccessCreatorScopedItem("chatting", fan, "read")).filter((fan) => {
           if (!query) return true;
           return [
             fan.fanName,
@@ -18846,10 +19167,10 @@
                         <th>Acciones</th>
                       </tr>
                     </thead>
-                    <tbody>
-                      ${fans.map((fan) => {
-                        const flow = DATA.fanFlow.filter((item) => item.fanId === fan.id).slice(-1)[0];
-                        const gf = DATA.gfStages.filter((item) => item.fanId === fan.id).slice(-1)[0];
+	                    <tbody>
+	                      ${fans.map((fan) => {
+	                        const flow = visibleFanFlow.filter((item) => item.fanId === fan.id).slice(-1)[0];
+	                        const gf = visibleGfStages.filter((item) => item.fanId === fan.id).slice(-1)[0];
                         return `
                           <tr>
                             <td>
@@ -18874,14 +19195,14 @@
                               <span class="table-caption">${escapeHtml(gf?.notes || "")}</span>
                             </td>
                             <td>${escapeHtml(flow?.notes || gf?.script || fan.monetizationContext || "-")}</td>
-                            <td>
-                              <div class="table-actions">
-                                <button class="ghost-button" data-action="open-form" data-value="fanProfile" data-mode="edit" data-id="${fan.id}">Editar fan</button>
-	                                <button class="ghost-button" data-action="open-form" data-value="fanFlow" data-mode="create">Flujo</button>
-                                <button class="ghost-button" data-action="open-form" data-value="gfStage" data-mode="create">GF</button>
-                                <button class="danger-button" data-action="delete-item" data-value="fanProfile" data-id="${fan.id}">Borrar</button>
-                              </div>
-                            </td>
+	                            <td>
+	                              <div class="table-actions">
+	                                ${canPerformEntityAction("fanProfile", "edit", fan.id) ? `<button class="ghost-button" data-action="open-form" data-value="fanProfile" data-mode="edit" data-id="${fan.id}">Editar fan</button>` : ""}
+		                                ${canPerformEntityAction("fanFlow", "create") ? `<button class="ghost-button" data-action="open-form" data-value="fanFlow" data-mode="create">Flujo</button>` : ""}
+	                                ${canPerformEntityAction("gfStage", "create") ? `<button class="ghost-button" data-action="open-form" data-value="gfStage" data-mode="create">GF</button>` : ""}
+	                                ${canPerformEntityAction("fanProfile", "delete", fan.id) ? `<button class="danger-button" data-action="delete-item" data-value="fanProfile" data-id="${fan.id}">Borrar</button>` : ""}
+	                              </div>
+	                            </td>
                           </tr>
                         `;
                       }).join("")}
@@ -18897,7 +19218,9 @@
       }
 
       function renderChatShiftsTab() {
-        const ordered = [...DATA.shifts].sort((a, b) => String(a.start).localeCompare(String(b.start)));
+        const ordered = DATA.shifts
+          .filter((shift) => canAccessCreatorScopedItem("chatting", shift, "read"))
+          .sort((a, b) => String(a.start).localeCompare(String(b.start)));
         const coverageGaps = ordered.filter((shift) => shift.status === "hueco" || !shift.chatterId).length;
 
         return `
@@ -18958,15 +19281,17 @@
       }
 
       function renderChatTabContent() {
-        if (state.chatTab === "roles") return renderChatRolesTab();
-        if (state.chatTab === "channels") return renderChatChannelsTab();
-        if (state.chatTab === "team") return renderChatTeamTab();
-        if (state.chatTab === "training") return renderChatTrainingTab();
-        if (state.chatTab === "eos") return renderEosReportsTab();
-        if (state.chatTab === "monitoring") return renderChatMonitoringTab();
-        if (state.chatTab === "approvals") return renderChatApprovalsTab();
-        if (state.chatTab === "fancrm") return renderChatFanCrmTab();
-        if (state.chatTab === "shifts") return renderChatShiftsTab();
+        const visibleKeys = new Set(getVisibleChatTabs().map(([key]) => key));
+        const activeTab = visibleKeys.has(state.chatTab) ? state.chatTab : "summary";
+        if (activeTab === "roles") return renderChatRolesTab();
+        if (activeTab === "channels") return renderChatChannelsTab();
+        if (activeTab === "team") return renderChatTeamTab();
+        if (activeTab === "training") return renderChatTrainingTab();
+        if (activeTab === "eos") return renderEosReportsTab();
+        if (activeTab === "monitoring") return renderChatMonitoringTab();
+        if (activeTab === "approvals") return renderChatApprovalsTab();
+        if (activeTab === "fancrm") return renderChatFanCrmTab();
+        if (activeTab === "shifts") return renderChatShiftsTab();
         return renderChatSummaryTab();
       }
 
@@ -18980,16 +19305,17 @@
               <article class="card" style="padding:24px;max-width:640px;">
                 <p style="margin-top:0;">En fase pre-revenue solo necesitas Fan CRM y deteccion de ballenas. Cuando contrates al primer chatter, registra aqui su perfil y se activaran las pestanas de EOS, monitoreo, aprobaciones, turnos y formacion.</p>
                 ${fans.length > 0 ? `<p class="muted">Tienes ${fans.length} fans registrados. Activa <em>Modo avanzado</em> para ver el centro completo de chatting.</p>` : `<p class="muted">Cuando empieces a registrar fans VIP / ballenas, apareceran aqui.</p>`}
-                <button class="primary-button" data-action="open-form" data-value="chatAgent" data-mode="new">Anadir primer chatter</button>
+	                ${renderEntityCreateButton("chatAgent", "Anadir primer chatter")}
               </article>
             </section>
           `;
         }
         const stats = getChatStats();
         const performance = getChatPerformanceSnapshot();
+        const canManageChatOps = hasGlobalModuleRecordScope("chatting");
         const actions = [
-          renderEntityCreateButton("chatAgent", "Nuevo chatter"),
-          renderEntityCreateButton("chatTraining", "Nueva formacion", "ghost-button"),
+          canManageChatOps ? renderEntityCreateButton("chatAgent", "Nuevo chatter") : "",
+          canManageChatOps ? renderEntityCreateButton("chatTraining", "Nueva formacion", "ghost-button") : "",
           renderEntityCreateButton("chatApproval", "Nueva aprobacion", "ghost-button")
         ].filter(Boolean).join("");
 
@@ -19869,18 +20195,21 @@
       }
 
       function renderScaling() {
-        const activeCount = DATA.creators.filter((creator) => creator.stage === "active").length;
-        const onboardingCount = DATA.creators.filter((creator) => creator.stage === "onboarding").length;
-        const blockedCount = DATA.onboardingBlocks.length;
-        const criticalOverdue = DATA.tasks.filter((task) => task.priority === "critical" && isTaskOverdue(task));
-        const backlogCount = DATA.contentPieces.filter((piece) => ["idea", "scripted"].includes(piece.status)).length;
+        const visibleCreators = getVisibleCreatorsForModule("escalado");
+        const visibleBlocks = getVisibleOnboardingBlocks();
+        const visibleContentPieces = DATA.contentPieces.filter((piece) => canAccessCreatorScopedItem("contenido", piece, "read"));
+        const activeCount = visibleCreators.filter((creator) => creator.stage === "active").length;
+        const onboardingCount = visibleCreators.filter((creator) => creator.stage === "onboarding").length;
+        const blockedCount = visibleBlocks.length;
+        const criticalOverdue = getVisibleTasks().filter((task) => task.priority === "critical" && isTaskOverdue(task));
+        const backlogCount = visibleContentPieces.filter((piece) => ["idea", "scripted"].includes(piece.status)).length;
         const atRisk = getAtRiskCreators();
         const readinessScore = Math.max(
           0,
           100 - (blockedCount * 12) - (criticalOverdue.length * 18) - (Math.max(backlogCount - 8, 0) * 3) - (atRisk.length * 20)
         );
         const warnings = [
-          { key: "blocked", label: "Bloqueos de alta inicial", count: blockedCount, threshold: 2, details: DATA.onboardingBlocks.map((item) => `${item.title} · ${item.creatorName}`) },
+          { key: "blocked", label: "Bloqueos de alta inicial", count: blockedCount, threshold: 2, details: visibleBlocks.map((item) => `${item.title} · ${item.creatorName}`) },
           { key: "critical", label: "Tareas criticas vencidas", count: criticalOverdue.length, threshold: 1, details: criticalOverdue.map((task) => `${task.title} · ${displayTaskOwners(task)}`) },
           { key: "backlog", label: "Contenido pendiente", count: backlogCount, threshold: 10, details: ["Ideas y guiones pendientes de producir."] },
           { key: "risk", label: "Creadoras en riesgo", count: atRisk.length, threshold: 1, details: atRisk.map((creator) => `${creator.name} · revisar retencion`) }
@@ -20345,6 +20674,27 @@
         setTimeout(() => document.getElementById("auth-email")?.focus(), 60);
       }
 
+      function renderAuthAccessDenied(issue = {}) {
+        document.body.className = "";
+        const agencyName = DATA.user?.agencyName || DEFAULT_DATA.user.agencyName;
+        document.getElementById("app").innerHTML = `
+          <div class="auth-screen">
+            <div class="auth-card">
+              <div class="auth-logo">
+                <div class="auth-logo-glyph" aria-hidden="true"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="ad-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#2A1F23"/><stop offset="100%" stop-color="#15100F"/></linearGradient><radialGradient id="ad-glow" cx="0.18" cy="0.12" r="0.65"><stop offset="0%" stop-color="#FF4D6D" stop-opacity="0.55"/><stop offset="100%" stop-color="#FF4D6D" stop-opacity="0"/></radialGradient><linearGradient id="ad-spark" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FFFFFF"/><stop offset="100%" stop-color="#FBE6EA"/></linearGradient></defs><rect width="64" height="64" rx="14" ry="14" fill="url(#ad-bg)"/><rect width="64" height="64" rx="14" ry="14" fill="url(#ad-glow)"/><path d="M32 8 C32 22 38 28 56 32 C38 36 32 42 32 56 C32 42 26 36 8 32 C26 28 32 22 32 8 Z" fill="url(#ad-spark)"/></svg></div>
+                <div class="auth-logo-copy">
+                  <h1>${escapeHtml(agencyName)}</h1>
+                  <p>Panel operativo</p>
+                </div>
+              </div>
+              <h2 class="auth-heading">${escapeHtml(issue.title || "Acceso restringido")}</h2>
+              <p class="auth-sub">${escapeHtml(issue.message || "Tu usuario no tiene acceso activo a este workspace.")}</p>
+              <button type="button" class="auth-submit" data-action="sign-out">Cambiar de cuenta</button>
+            </div>
+          </div>
+        `;
+      }
+
       /* ─────────────────────────────────────────────
          AUTH — Lógica: signIn / signOut / initAuth
          ───────────────────────────────────────────── */
@@ -20576,6 +20926,10 @@
         /* Guard de autenticación — si no hay sesión, no se monta el panel */
         if (authLoading) { renderAuthLoading(); return; }
         if (!authUser)   { renderLogin();       return; }
+        if (!hasHydratedApp) { renderAuthLoading(); return; }
+
+        const accessIssue = getAuthAccessIssue();
+        if (accessIssue) { renderAuthAccessDenied(accessIssue); return; }
 
         ensureAllowedView();
         const scrollPosition = options.preserveScroll === false ? null : captureScrollPosition();
@@ -20902,6 +21256,7 @@
             setState({ activeSopId: id, activeForm: null, activeCreatorId: null, activeChatChannelId: null, activeCallLeadId: null, creatorComposer: null, channelComposer: null, channelEditingNoteId: null });
             return;
           case "open-creator-detail":
+            if (!canPerformEntityAction("creator", "read", id || "")) return;
             modalReturnFocusSelector = `[data-action="open-creator-detail"][data-id="${id}"]`;
             setState({
               activeSopId: null,
@@ -21061,12 +21416,15 @@
             }
             return;
           }
-          case "mark-done": {
-            if (markEntityDone(value, id)) {
-              render({ focusId: VIEW_FOCUS_IDS[state.view] || null });
-            }
-            return;
-          }
+	          case "mark-done": {
+	            if (markEntityDone(value, id)) {
+                if (value === "task") {
+                  state.taskStatus = "active";
+                }
+	              render({ focusId: VIEW_FOCUS_IDS[state.view] || null });
+	            }
+	            return;
+	          }
           case "delete-item": {
             if (!canPerformEntityAction(value, "delete", id || "")) {
               return;
