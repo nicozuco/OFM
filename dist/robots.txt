@@ -1,7 +1,0 @@
-# Version de revision: la web sigue cerrada a buscadores.
-# ANTES DE PUBLICAR: borrar el "Disallow: /", descomentar el Sitemap
-# con el dominio real y quitar el noindex de las cuatro paginas HTML.
-User-agent: *
-Disallow: /
-
-# Sitemap: https://ejemplo.atlis.es/sitemap.xml
